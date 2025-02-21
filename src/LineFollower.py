@@ -2,12 +2,10 @@ from TrackerSensor import TrackerSensor
 from Motor import Motor
 
 class LineFollower():
-    def __init__(self, tracker_sensors: list[TrackerSensor], left_motor: Motor, right_motor: Motor):
+    def __init__(self, tracker_sensors: list[TrackerSensor]):
         # Tracker sensors should be ordered from left to right
         self.__tracker_sensors = tracker_sensors
         self.__sensor_count = len(tracker_sensors)
-        self.__left_motor = left_motor
-        self.__right_motor = right_motor
 
     def get_line_pos(self) -> float | None:
         # Tracker sensor readings are either 0 or 1. Assuming tracker sensors are evenly spaced (with unit distance),
