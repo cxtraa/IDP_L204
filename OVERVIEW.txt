@@ -7,3 +7,4 @@ TO DO:
 
 Notes:
 - Empirical largest spacing of tracking sensors such that two sensors can both detect the line ~1.8 cm
+- Should classes be in separate files or together?
