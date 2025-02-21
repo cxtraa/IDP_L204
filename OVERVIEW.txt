@@ -1,0 +1,9 @@
+TO DO:
+- Manual Control:
+    - Abstract control of each of three motors (incl. one servo)
+    - Abstract control of colour sensor, grouped IR sensors, and LED
+- Automated Control:
+    - Line tracking algorithm
+
+Notes:
+- Empirical largest spacing of tracking sensors such that two sensors can both detect the line ~1.8 cm
