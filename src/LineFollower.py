@@ -35,3 +35,7 @@ class LineFollower():
         self.__integral_error += abs_error
         power_error += self.__integral_error * LineFollower.K_I
         return power_error
+
+    def reset(self):
+        self.__last_error = self.get_line_pos()
+        self.__integral_error = 0
