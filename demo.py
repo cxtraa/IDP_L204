@@ -4,7 +4,7 @@ from machine import Pin , PWM
 from utime import sleep
 
 # Set up PWM Pin for servo control
-servo1_pin = machine.Pin(13)
+servo1_pin = Pin(13)
 servo1 = PWM(servo1_pin)
 
 # Set Duty Cycle for Different Angles
