@@ -20,8 +20,8 @@ class LineFollower():
         # 
         # The position will (hopefully) be a multiple of a half (if the thresholds are right), as 
         # a maximum of two sensors should read high.
-        readings = [ts.read() for ts in self.__tracker_sensors]
-        success = readings.count(True)
+        readings = [ts.read() for ts in self.__tracker_sensors] # will look something like [0, 1, 1, 0]
+        success = readings.count(True) # get "total mass"
         if success:
             pos = sum([self.__sensor_pos[i] * readings[i] for i in range(self.__sensor_count)]) / success
             return pos
@@ -30,11 +30,11 @@ class LineFollower():
     def get_power_error(self) -> float:
         # Returns how much extra power (+ve or -ve) needs to be delivered to right wheel than left to correct angle
         abs_error = self.get_line_pos()
-        power_error = abs_error * LineFollower.K_P
         derivative_error = abs_error - self.__last_error
-        power_error += derivative_error * LineFollower.K_D
         self.__integral_error += abs_error
-        power_error += self.__integral_error * LineFollower.K_I
+
+        # PID control
+        power_error = abs_error * LineFollower.K_P + derivative_error * LineFollower.K_D + self.__integral_error * LineFollower.K_I
         return power_error
 
     def reset(self):

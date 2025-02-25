@@ -3,7 +3,17 @@ TO DO:
     - Abstract control of each of three motors (incl. one servo)
     - Abstract control of colour sensor, grouped IR sensors, and LED
 - Automated Control:
-    - Line tracking algorithm
+    - Line tracking algorithm (done?)
+    - Represent the map as a graph
+        - Vertices are junctions on the map
+        - Edges are slightly irrelevant, we can use the coordinates to determine direction
+        - E.g. (0, 0) -> (1, 0) is clearly "go right"
+    - Find the shortest path between two nodes using Dijkstra's algorithm
+    
+    - robot.forward() sends robot forward until it meets a new junction
+    - robot.turn_right() rotates robot clockwise 90 deg
+    - robot.turn_left() rotates robot anti-clockwise 90 deg
+    - robot must keep track of its own orientation
 
 Notes:
 - Empirical largest spacing of tracking sensors such that two sensors can both detect the line ~1.8 cm
