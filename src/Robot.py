@@ -2,6 +2,7 @@ from config import GRAPH
 from PathFinder import PathFinder
 from LineFollower import LineFollower
 from Motor import Motor
+from time import sleep
 
 class Robot:
     def __init__(self, graph, start_node=(0,0), start_dir=0):
@@ -18,8 +19,8 @@ class Robot:
         self.path_finder = PathFinder(graph=graph)
         
         self.line_follower = LineFollower()
-        self.left_motor = Motor(2)
-        self.right_motor = Motor(3)
+        self.left_motor = Motor(3)
+        self.right_motor = Motor(4)
     
     def navigate(self, dest):
         """
@@ -43,12 +44,24 @@ class Robot:
                 break
 
         # While we are not at a junction, run both the left and right motor
+        while not self.line_follower.check_junction():
+            self.left_motor.forward()
+            self.right_motor.forward()
+            sleep(0.1)
+        
+        self.left_motor.off()
+        self.right_motor.off()
+
 
     def turn_right(self):
         self.dir = (1 + self.dir) % 4
 
         # TODO: Implement actual turning right
-
+        self.left_motor.forward()
+        sleep(0.1)
+        
+        self.left_motor.off()
+        
     def turn_left(self):
         self.dir = (-1 + self.dir) % 4
 
