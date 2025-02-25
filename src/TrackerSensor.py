@@ -1,6 +1,6 @@
 from machine import Pin
 
-class TrackerSensor():
+class TrackerSensor:
     def __init__(self, pin_number: int):
         self.__pin_in = Pin(pin_number, Pin.IN)
     

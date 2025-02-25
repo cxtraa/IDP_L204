@@ -10,10 +10,15 @@ TO DO:
         - E.g. (0, 0) -> (1, 0) is clearly "go right"
     - Find the shortest path between two nodes using Dijkstra's algorithm
     
-    - robot.forward() sends robot forward until it meets a new junction
+    - robot.forward() sends robot forward until it meets a new junction 
+    
     - robot.turn_right() rotates robot clockwise 90 deg
     - robot.turn_left() rotates robot anti-clockwise 90 deg
     - robot must keep track of its own orientation
+
+    - TODO: Need to implement actual moving forward
+    - TODO: Need to have robot turn right and turn_left
+    - TODO: Test line following, test junction recognition
 
 Notes:
 - Empirical largest spacing of tracking sensors such that two sensors can both detect the line ~1.8 cm
