@@ -6,11 +6,12 @@ class LineFollower:
     K_D = 0.02
     K_I = 12
 
-    def __init__(self, tracker_sensors: list[TrackerSensor]):
+    def __init__(self, tracker_sensors: list[TrackerSensor], sensor_pos: list[float]):
         # Tracker sensors should be ordered from left to right
 
         self.__tracker_sensors = tracker_sensors
         self.__sensor_count = len(tracker_sensors)
+        self.__sensor_pos = sensor_pos
         self.__last_error = self.get_line_pos()
         self.__integral_error = 0
     
@@ -26,7 +27,7 @@ class LineFollower:
         readings = self.get_ir_readings() # will look something like [0, 1, 1, 0]
         success = readings.count(True) # get "total mass"
         if success:
-            pos = sum([(i - (len(readings)-1)/2) * readings[i] for i in range(self.__sensor_count)]) / success # offset of 1.5 is to center at middle
+            pos = sum([self.__sensor_pos[i] * readings[i] for i in range(self.__sensor_count)]) / success
             return pos
         return None
 
