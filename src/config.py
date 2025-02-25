@@ -32,3 +32,5 @@ class Pins(Enum):
     Tracker2 = 19
     Tracker3 = 20
     Tracker4 = 21
+
+TURN_TIME = 0.5

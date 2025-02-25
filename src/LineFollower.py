@@ -9,7 +9,7 @@ class LineFollower:
     def __init__(self, tracker_sensors: list[TrackerSensor]):
         # Tracker sensors should be ordered from left to right
 
-        self.__tracker_sensors = [TrackerSensor()]
+        self.__tracker_sensors = tracker_sensors
         self.__sensor_count = len(tracker_sensors)
         self.__last_error = self.get_line_pos()
         self.__integral_error = 0

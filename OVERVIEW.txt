@@ -19,6 +19,7 @@ TO DO:
     - TODO: Need to implement actual moving forward
     - TODO: Need to have robot turn right and turn_left
     - TODO: Test line following, test junction recognition
+    - TODO: Code for operating forklift
 
 Notes:
 - Empirical largest spacing of tracking sensors such that two sensors can both detect the line ~1.8 cm
