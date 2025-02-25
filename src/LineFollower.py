@@ -6,10 +6,11 @@ class LineFollower():
     K_D = 0.02
     K_I = 12
 
-    def __init__(self, tracker_sensors: list[TrackerSensor]):
+    def __init__(self, tracker_sensors: list[TrackerSensor], sensor_pos: list[float]):
         # Tracker sensors should be ordered from left to right
         self.__tracker_sensors = tracker_sensors
         self.__sensor_count = len(tracker_sensors)
+        self.__sensor_pos = sensor_pos
         self.__last_error = self.get_line_pos()
         self.__integral_error = 0
 
@@ -22,7 +23,7 @@ class LineFollower():
         readings = [ts.read() for ts in self.__tracker_sensors]
         success = readings.count(True)
         if success:
-            pos = sum([(i - 1.5) * readings[i] for i in range(self.__sensor_count)]) / success
+            pos = sum([self.__sensor_pos[i] * readings[i] for i in range(self.__sensor_count)]) / success
             return pos
         return None
 
