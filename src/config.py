@@ -26,3 +26,9 @@ GRAPH = {
     (-104, -31) : [(-104, 0)],
     (103, -31) : [(103, 0)], 
 }
+
+class Pins(Enum):
+    Tracker1 = 18
+    Tracker2 = 19
+    Tracker3 = 20
+    Tracker4 = 21

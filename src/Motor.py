@@ -24,6 +24,6 @@ class Motor:
         duty_cycle = int((2**16 - 1) * percentage) # the board expects a 16 bit unsigned integer from 0 - (2^16-1) inclusive
         self.pwm1.duty_u16(duty_cycle)
 
-    def reverse(self):
+    def reverse(self) -> None:
         self.m1Dir.value(1)
         self.set_duty_cycle(30)

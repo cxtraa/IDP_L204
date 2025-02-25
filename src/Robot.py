@@ -1,5 +1,7 @@
 from config import GRAPH
 from PathFinder import PathFinder
+from LineFollower import LineFollower
+from Motor import Motor
 
 class Robot:
     def __init__(self, graph, start_node=(0,0), start_dir=0):
@@ -14,12 +16,17 @@ class Robot:
         self.curr_node = start_node
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
+        
+        self.line_follower = LineFollower()
+        self.left_motor = Motor(2)
+        self.right_motor = Motor(3)
     
     def navigate(self, dest):
         """
         Move the robot to `dest` where multiple nodes might be in between.
         """
         shortest_path = self.path_finder.find_shortest_path(self.curr_node, dest)
+        print(shortest_path)
         for i in range(1, len(shortest_path)):
             self.move(shortest_path[i])
 
@@ -33,13 +40,19 @@ class Robot:
             cond4 = self.dir == 3 and n_x < c_x
             if cond1 or cond2 or cond3 or cond4:
                 self.curr_node = neighbor
-                break            
+                break
+
+        # While we are not at a junction, run both the left and right motor
 
     def turn_right(self):
         self.dir = (1 + self.dir) % 4
 
+        # TODO: Implement actual turning right
+
     def turn_left(self):
         self.dir = (-1 + self.dir) % 4
+
+        # TODO: Implement actual turning left
     
     def change_dir(self, desired_dir):
         """
@@ -80,7 +93,6 @@ class Robot:
 def main():
     robot = Robot(graph=GRAPH, start_node=(103,0), start_dir=1)
     robot.navigate((-104, 162))
-    print(robot)
 
 if __name__ == "__main__":
     main()

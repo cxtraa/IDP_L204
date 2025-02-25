@@ -51,7 +51,6 @@ class PathFinder:
         path.reverse()
         return path
 
-
 def main():
     pathFinder = PathFinder(GRAPH)
     print(pathFinder.find_shortest_path((0,0), (103, -31)))
