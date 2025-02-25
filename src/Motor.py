@@ -16,14 +16,16 @@ class Motor:
     def off(self) -> None:
         self.pwm1.duty_u16(0)
     
-    def forward(self) -> None:
+    def forward(self, speed : float) -> None:
         self.m1Dir.value(0)
-        self.set_duty_cycle(100)
+        self.set_duty_cycle(speed)
     
     def set_duty_cycle(self, percentage : float) -> int:
+        if not 0 <= percentage <= 100:
+            raise ValueError("Motor goes between 0 to 100")
         duty_cycle = int((2**16 - 1) * percentage) # the board expects a 16 bit unsigned integer from 0 - (2^16-1) inclusive
         self.pwm1.duty_u16(duty_cycle)
 
-    def reverse(self) -> None:
+    def reverse(self, speed : float) -> None:
         self.m1Dir.value(1)
-        self.set_duty_cycle(30)
+        self.set_duty_cycle(speed)
