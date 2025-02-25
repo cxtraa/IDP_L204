@@ -1,4 +1,4 @@
-from constants import *
+from constants import GRAPH
 from PathFinder import PathFinder
 from Control import Control
 from Motor import Motor
@@ -13,28 +13,25 @@ class Robot:
             - 2 South
             - 3 West
         """
-        self.left_motor = Motor(LEFT_MOTOR_NUM)
-        self.right_motor = Motor(RIGHT_MOTOR_NUM)
         self.dir = start_dir
         self.curr_node = start_node
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
-        self.control = Control()
+        
+        self.line_follower = Control()
+        self.left_motor = Motor(3)
+        self.right_motor = Motor(4)
     
-    def navigate(self, dest : tuple[int, int]) -> None:
+    def navigate(self, dest):
         """
         Move the robot to `dest` where multiple nodes might be in between.
         """
         shortest_path = self.path_finder.find_shortest_path(self.curr_node, dest)
+        print(shortest_path)
         for i in range(1, len(shortest_path)):
             self.move(shortest_path[i])
 
     def forward(self) -> None:
-        """
-        Move the robot forward until it reaches the next node.
-        """
-
-        # Update internal robot state
         c_x, c_y = self.curr_node
         for neighbor in self.graph[self.curr_node]:
             n_x, n_y = neighbor
@@ -46,41 +43,31 @@ class Robot:
                 self.curr_node = neighbor
                 break
 
-        # While we are not at a junction, run both the left and right motor, using PID control to line follow
-        while not self.control.at_junction():
-            self.left_motor.forward(50 + self.control.get_pid_error())
-            self.right_motor.forward(50 - self.control.get_pid_error())
+        # While we are not at a junction, run both the left and right motor
+        while not self.line_follower.check_junction():
+            self.left_motor.forward()
+            self.right_motor.forward()
             sleep(0.1)
         
-        # The robot should be stationary after reaching the node
         self.left_motor.off()
         self.right_motor.off()
 
-    def turn_right(self):
-        """
-        Make a 90 deg turn clockwise.
-        This works by powering left wheel until a line is detected.
-        """
 
+    def turn_right(self):
         self.dir = (1 + self.dir) % 4
 
+        # TODO: Implement actual turning right
         self.left_motor.forward()
-        while not self.control.at_junction():
-            sleep(0.01)
+        sleep(0.1)
+        
         self.left_motor.off()
         
     def turn_left(self):
-        """
-        Turn the robot 90 deg anticlockwise.
-        """
         self.dir = (-1 + self.dir) % 4
 
-        self.right_motor.forward()
-        while not self.control.at_junction():
-            sleep(0.01)
-        self.right_motor.off()
+        # TODO: Implement actual turning left
     
-    def change_dir(self, desired_dir : int):
+    def change_dir(self, desired_dir):
         """
         Find the optimal turns to change the direction.
         E.g. if going from North to East, we should call turn_right() once.
@@ -94,7 +81,7 @@ class Robot:
             self.turn_right()
             self.turn_right()
     
-    def move(self, dest : tuple[int, int]):
+    def move(self, dest):
         """
         Move the robot from the current node to `dest`, where current node and dest are NEIGHBORS.
         """
@@ -115,3 +102,10 @@ class Robot:
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]
         return f"Position: {self.curr_node} | Direction : {directions[self.dir]}"
+
+def main():
+    robot = Robot(graph=GRAPH, start_node=(103,0), start_dir=1)
+    robot.navigate((-104, 162))
+
+if __name__ == "__main__":
+    main()
