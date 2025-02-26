@@ -44,3 +44,14 @@ K_P = 2.5
 K_D = 0.02
 K_I = 12
 TURN_TIME = 0.5
+
+# Significant points
+pickup_1 = (-34,32)
+pickup_2 = (32,66)
+pickup_3 = (-27,123)
+pickup_4 = (40,139)
+
+start_point = (0,-29)
+
+depot_1 = (103,-31)
+depot_2 = (-104,-31)
