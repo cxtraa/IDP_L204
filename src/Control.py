@@ -46,6 +46,10 @@ class Control:
         Hence, the power of the left wheel should be increased by `power_error`, and right wheel decreased by same amount.
         """
         abs_error = self.get_line_pos()
+
+        if abs_error is None: # No line detected
+            return 0
+        
         derivative_error = abs_error - self.__last_error
         self.__last_error = abs_error
         self.__integral_error += abs_error
