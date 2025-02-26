@@ -34,6 +34,8 @@ class LineFollower:
     def get_power_error(self) -> float:
         # Returns how much extra power (+ve or -ve) needs to be delivered to right wheel than left to correct angle
         abs_error = self.get_line_pos()
+        if abs_error is None:
+            return 0
         derivative_error = abs_error - self.__last_error
         self.__integral_error += abs_error
 
