@@ -1,6 +1,7 @@
 
 from constants import GRAPH
 from Robot import Robot
+from StateMachine import Statemachine
 import time
 
 def main():
@@ -9,6 +10,8 @@ def main():
         start_node=(0,-29),
         start_dir=0
     )
+
+    statemachine = Statemachine(robot)
 
     # TODO: Robot continuously goes to each house. For each house, if there is a parcel, go to the depot, then go to the next house.
     # Otherwise, just go straight to the next house.
@@ -25,50 +28,16 @@ def main():
     currentState = NAVIGATE_TO_PICKUP
     flag = 0
 
-    # Dummy functions to simulate AGV actions
-    def driveToPickup():
-        print("Driving to pickup point...")
-        time.sleep(1)
-
-    def detectPackage():
-        print("Checking for package...")
-        return True
-
-    def pickUpPackage():
-        print("Picking up package...")
-        time.sleep(1)
-
-    def getPackageColour():
-        return "blue"
-
-    def getDepotForColour(colour):
-        return 1 if colour in ["blue", "green"] else 2
-
-    def driveToDepot(depot):
-        print(f"Driving to Depot {depot}...")
-        time.sleep(1)
-
-    def dropOffPackage():
-        print("Dropping off package...")
-        time.sleep(1)
-
-    def driveToStart():
-        print("Returning to start box...")
-        time.sleep(1)
-
-    def stopMotors():
-        print("Motors stopped.")
-
     # Main loop
     while currentState != STOP_RUN:
         if currentState == NAVIGATE_TO_PICKUP:
-            driveToPickup()
+            statemachine.driveToPickup()
             currentState = PICKUP_PACKAGE
 
         elif currentState == PICKUP_PACKAGE:
-            if detectPackage():
+            if statemachine.detectPackage():
                 flag = 0
-                pickUpPackage()
+                statemachine.pickUpPackage()
                 currentState = NAVIGATE_TO_DEPOT
             else:
                 flag += 1
@@ -76,21 +45,21 @@ def main():
                     currentState = RETURN_TO_START
 
         elif currentState == NAVIGATE_TO_DEPOT:
-            colour = getPackageColour()
-            depot = getDepotForColour(colour)
-            driveToDepot(depot)
+            colour = statemachine.getPackageColour()
+            depot = statemachine.getDepotForColour(colour)
+            statemachine.driveToDepot(depot)
             currentState = DROP_PACKAGE
 
         elif currentState == DROP_PACKAGE:
-            dropOffPackage()
+            statemachine.dropOffPackage()
             currentState = NAVIGATE_TO_PICKUP
 
         elif currentState == RETURN_TO_START:
-            driveToStart()
+            statemachine.driveToStart()
             currentState = STOP_RUN
 
         else:
-            stopMotors()
+            statemachine.stopMotors()
             break
 
     print("AGV has stopped. Task complete!")
