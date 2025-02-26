@@ -1,9 +1,11 @@
-from enum import Enum
-
 """
-Useful constants such as the graph of the map.
+Contains:
+- Graph of map
+- Pin names to numbers
+- Movement parameters such as K_P, K_I, K_D
 """
 
+# Graph of map robot will go on
 GRAPH = {
     (0,0) : [(103, 0), (-34, 0), (0, -29)],
     (0, -29) : [(0, 0)],
@@ -27,8 +29,18 @@ GRAPH = {
     (103, -31) : [(103, 0)], 
 }
 
-class Pins(Enum):
-    Tracker1 = 18
-    Tracker2 = 19
-    Tracker3 = 20
-    Tracker4 = 21
+# Pin configuration
+IR1_PIN = 8
+IR2_PIN = 9
+IR3_PIN = 10
+IR4_PIN = 11
+COLOR_SENSOR_PIN = 16
+DIST_SENSOR_PIN = 20
+LEFT_MOTOR_NUM = 3
+RIGHT_MOTOR_NUM = 4
+
+# Movement parameters
+K_P = 2.5
+K_D = 0.02
+K_I = 12
+TURN_TIME = 0.5

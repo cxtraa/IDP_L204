@@ -1,5 +1,5 @@
 
-from config import GRAPH
+from constants import GRAPH
 
 import heapq
 
@@ -49,12 +49,4 @@ class PathFinder:
             curr_node = prev[curr_node]
         path.append(start)
         path.reverse()
-        return path
-
-def main():
-    pathFinder = PathFinder(GRAPH)
-    print(pathFinder.find_shortest_path((0,0), (103, -31)))
-
-if __name__ == "__main__":
-    main()
-        
+        return path      
