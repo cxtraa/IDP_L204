@@ -19,6 +19,7 @@ class Robot:
         self.curr_node = start_node
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
+        
         self.control = Control()
     
     def navigate(self, dest : tuple[int, int]) -> None:
@@ -56,17 +57,18 @@ class Robot:
         self.left_motor.off()
         self.right_motor.off()
 
+
     def turn_right(self):
         """
         Make a 90 deg turn clockwise.
         This works by powering left wheel until a line is detected.
         """
-
         self.dir = (1 + self.dir) % 4
 
         self.left_motor.forward()
         while not self.control.at_junction():
             sleep(0.01)
+        
         self.left_motor.off()
         
     def turn_left(self):
