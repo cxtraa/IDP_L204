@@ -8,13 +8,13 @@ class Motor:
         # Used for assigning the right motor number to the PWM and DIR
         motor_numbers = [(0, 1), (3, 2), (4, 5), (7, 6)]
         dir_pin, pwm_pin = motor_numbers[motor_number - 1]
-        self.m1Dir = Pin(dir_pin, Pin.OUT)
-        self.pwm1 = PWM(Pin(pwm_pin))
-        self.pwm1.freq(1000)
-        self.pwm1.duty_u16(0)
+        self.dir = Pin(dir_pin, Pin.OUT)
+        self.pwm = PWM(Pin(pwm_pin))
+        self.pwm.freq(1000)
+        self.pwm.duty_u16(0)
     
     def off(self) -> None:
-        self.pwm1.duty_u16(0)
+        self.pwm.duty_u16(0)
     
     def forward(self, speed : float) -> None:
         print(f"Speed in forward: {speed}")
@@ -31,5 +31,5 @@ class Motor:
         self.pwm1.duty_u16(duty_cycle)
 
     def reverse(self, speed : float) -> None:
-        self.m1Dir.value(1)
+        self.dir.value(1)
         self.set_duty_cycle(speed)
