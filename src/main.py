@@ -8,7 +8,7 @@ def main():
         start_dir=0
     )
 
-    robot.navigate((-104, 88))
+    robot.forward()
     print("Program finished.")
 
 if __name__ == "__main__":

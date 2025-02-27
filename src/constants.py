@@ -40,10 +40,10 @@ LEFT_MOTOR_NUM = 3
 RIGHT_MOTOR_NUM = 4
 
 # Movement parameters
-K_P = 2.5
-K_D = 0.02
-K_I = 12
-TURN_TIME = 0.5
+K_P = 10.0
+K_D = 1.0
+K_I = 0.01
+TIME_FORWARD_AT_TURN = 0.5
 
 # Significant points
 pickup_1 = (-34,32)

@@ -5,7 +5,7 @@ from Motor import Motor
 from time import sleep
 
 class Robot:
-    def __init__(self, graph, start_node=(0,0), start_dir=0):
+    def __init__(self, graph, start_node=(0,0), start_dir=0, sensor_pos = []):
         """
         The possible robot directions are:
             - 0 North
@@ -20,7 +20,7 @@ class Robot:
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
         
-        self.control = Control()
+        self.control = Control(sensor_pos=sensor_pos)
     
     def navigate(self, dest : tuple[int, int]) -> None:
         """
@@ -51,7 +51,7 @@ class Robot:
         while not self.control.at_junction():
             self.left_motor.forward(50 + self.control.get_pid_error())
             self.right_motor.forward(50 - self.control.get_pid_error())
-            sleep(0.1)
+            sleep(0.01)
         
         # The robot should be stationary after reaching the node
         self.left_motor.off()
@@ -65,8 +65,14 @@ class Robot:
         """
         self.dir = (1 + self.dir) % 4
 
-        self.left_motor.forward()
-        while not self.control.at_junction():
+        self.left_motor.forward(50)
+        self.right_motor.forward(50)
+        sleep(TIME_FORWARD_AT_TURN)
+        self.left_motor.off()
+        self.right_motor.off()
+
+        self.left_motor.forward(50)
+        while not self.control.__tracker_sensors[2].read():
             sleep(0.01)
         
         self.left_motor.off()
@@ -77,8 +83,14 @@ class Robot:
         """
         self.dir = (-1 + self.dir) % 4
 
-        self.right_motor.forward()
-        while not self.control.at_junction():
+        self.left_motor.forward(50)
+        self.right_motor.forward(50)
+        sleep(TIME_FORWARD_AT_TURN)
+        self.left_motor.off()
+        self.right_motor.off()
+
+        self.right_motor.forward(50)
+        while not self.control.__tracker_sensors[1].read():
             sleep(0.01)
         self.right_motor.off()
     

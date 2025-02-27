@@ -17,7 +17,7 @@ class Control:
         ]
         self.__sensor_count = 4
         self.__sensor_pos = sensor_pos
-        self.__last_error = self.get_line_pos()
+        self.__last_error = self.get_line_pos() if self.get_line_pos() is not None else 0.0
         self.__integral_error = 0
     
     def get_ir_readings(self) -> list[int]:
