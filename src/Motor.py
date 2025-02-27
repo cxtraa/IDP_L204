@@ -18,7 +18,7 @@ class Motor:
     
     def forward(self, speed : float) -> None:
         print(f"Speed in forward: {speed}")
-        self.m1Dir.value(0)
+        self.dir.value(0)
         self.set_duty_cycle(speed)
     
     def set_duty_cycle(self, percentage : float) -> None:
