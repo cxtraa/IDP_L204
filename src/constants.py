@@ -45,6 +45,9 @@ K_D = 1.0
 K_I = 0.01
 TIME_FORWARD_AT_TURN = 0.5
 
+# Button
+BUTTON_DEBOUNCE_TIME = 0.01
+
 # Significant points
 pickup_1 = (-34,32)
 pickup_2 = (32,66)
