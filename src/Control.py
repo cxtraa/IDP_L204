@@ -2,6 +2,8 @@ from TrackerSensor import TrackerSensor
 from Motor import Motor
 from constants import *
 
+from math import copysign
+
 class Control:
     K_P = 2.5
     K_D = 0.02
@@ -48,7 +50,7 @@ class Control:
         abs_error = self.get_line_pos()
 
         if abs_error is None: # No line detected
-            return 0
+            abs_error = copysign(3.0, self.__last_error) # Assume the line is slightly closer to middle than it was last time
         
         derivative_error = abs_error - self.__last_error
         self.__last_error = abs_error
@@ -63,7 +65,7 @@ class Control:
         Since the left most sensor and right most sensor are very far out, if either of these go to 1 the robot is almost certainly at a junction.
         """
         readings = self.get_ir_readings()
-        return readings[0] == 1 or readings[3] == 1
+        return (readings[0] == 1 or readings[3] == 1) and (readings.count(True) >= 2)
         
     def reset(self):
         self.__last_error = self.get_line_pos()

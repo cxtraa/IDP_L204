@@ -40,10 +40,11 @@ LEFT_MOTOR_NUM = 3
 RIGHT_MOTOR_NUM = 4
 
 # Movement parameters
-K_P = 10.0
+K_P = 15.0
 K_D = 1.0
 K_I = 0.01
 TIME_FORWARD_AT_TURN = 0.5
+DELTA_T = 0.01
 
 # Button
 BUTTON_DEBOUNCE_TIME = 0.01
