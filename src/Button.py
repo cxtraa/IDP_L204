@@ -8,12 +8,18 @@ class Button:
         self.last_debounce_time = 0.0
         self.state = 0 # low
 
-    def read(self) -> int:
+    def __read(self) -> int:
         return self.__pin_in.value()
 
-    def update(self) -> None:
+    def __update(self) -> None:
         if ticks_ms() - self.last_debounce_time > BUTTON_DEBOUNCE_TIME:
-            self.state = self.read()
+            self.state = self.__read()
+    
+    def pressed(self) -> bool:
+        self.__update()
+        if self.state == 1:
+            return True
+        return False
     
     def irq(self, trigger, handler) -> None:
         self.__pin_in.irq(trigger, handler)
