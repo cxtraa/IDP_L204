@@ -2,6 +2,7 @@ from constants import *
 from PathFinder import PathFinder
 from Control import Control
 from Motor import Motor
+from Button import Button
 from time import sleep
 
 class Robot:
@@ -15,6 +16,7 @@ class Robot:
         """
         self.left_motor = Motor(LEFT_MOTOR_NUM)
         self.right_motor = Motor(RIGHT_MOTOR_NUM)
+        self.start_button = Button(12)
         self.dir = start_dir
         self.curr_node = start_node
         self.graph = graph
@@ -48,14 +50,15 @@ class Robot:
                 break
 
         # Move forward for half a second so we don't detect the last junction as a new one
-        self.left_motor.forward(ROBOT_SPEED_SLOW)
-        self.right_motor.forward(ROBOT_SPEED_SLOW)
-        sleep(TIME_FORWARD_AT_TURN)
+        self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+        self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+        while self.control.at_junction():
+            sleep(DELTA_T)
 
         # While we are not at a junction, run both the left and right motor, using PID control to line follow
         while not self.control.at_junction():
-            self.left_motor.forward(ROBOT_SPEED_FAST + self.control.get_pid_error())
-            self.right_motor.forward(ROBOT_SPEED_FAST - self.control.get_pid_error())
+            self.left_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
+            self.right_motor.forward(ROBOT_SPEED_LINE - self.control.get_pid_error())
             sleep(DELTA_T)
         
         # The robot should be stationary after reaching the node
@@ -70,18 +73,25 @@ class Robot:
         """
         self.dir = (1 + self.dir) % 4
 
-        self.left_motor.forward(ROBOT_SPEED_SLOW)
-        self.right_motor.forward(ROBOT_SPEED_SLOW)
+        # 1. Go forward a bit
+        self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+        self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
         sleep(TIME_FORWARD_AT_TURN)
         self.left_motor.off()
         self.right_motor.off()
 
-        self.left_motor.forward(ROBOT_SPEED_SLOW)
-        sleep(0.5) # In case there is a path forwards and right, don't detect the forwards path as finishing the turn
-        while not self.control.__tracker_sensors[1].read():
-            sleep(0.01)
+        # 2. Turn until neither of the middle sensors detect
+        self.left_motor.forward(ROBOT_SPEED_TURN)
+        self.right_motor.reverse(40)
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        
+        # 3. Turn until both of the middle sensors detect
+        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
+            sleep(DELTA_T)
         
         self.left_motor.off()
+        self.right_motor.off()
         
     def turn_left(self):
         """
@@ -89,17 +99,25 @@ class Robot:
         """
         self.dir = (-1 + self.dir) % 4
 
-        self.left_motor.forward(ROBOT_SPEED_SLOW)
-        self.right_motor.forward(ROBOT_SPEED_SLOW)
+        # 1. Go forward a bit
+        self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+        self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
         sleep(TIME_FORWARD_AT_TURN)
         self.left_motor.off()
         self.right_motor.off()
 
-        self.right_motor.forward(ROBOT_SPEED_SLOW)
-        sleep(0.5) # In case there is a path forwards and right, don't detect the forwards path as finishing the turn
-        while not self.control.__tracker_sensors[2].read():
-            sleep(0.01)
+        # 2. Turn until neither of the middle sensors detect
+        self.right_motor.forward(ROBOT_SPEED_TURN)
+        self.left_motor.reverse(40)
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        
+        # 3. Turn until both of the middle sensors detect
+        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
+            sleep(DELTA_T)
+        
         self.right_motor.off()
+        self.left_motor.off()
     
     def change_dir(self, desired_dir : int):
         """
@@ -132,6 +150,63 @@ class Robot:
             self.change_dir(2)
         
         self.forward()
+    
+    def lifting_procedure(self) -> None:
+        pass
+
+    def reverse_left(self) -> None:
+        self.left_motor.reverse(ROBOT_SPEED_TURN)
+        self.right_motor.forward(ROBOT_SPEED_TURN)
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
+            sleep(DELTA_T)
+        self.left_motor.off()
+        self.right_motor.off()
+    
+    def reverse_right(self) -> None:
+        self.right_motor.reverse(ROBOT_SPEED_TURN)
+        self.left_motor.forward(ROBOT_SPEED_TURN)
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
+            sleep(DELTA_T)
+        self.left_motor.off()
+        self.right_motor.off()
+
+    def backwards_from_parcel(self) -> None:
+        # Robot reverses
+        self.left_motor.reverse(ROBOT_SPEED_TURN)
+        self.right_motor.reverse(ROBOT_SPEED_TURN)
+        sleep(TIME_BACKWARDS_AFTER_PARCEL)
+    
+    def go_from_pickup_to_move(self, next_node : tuple[int, int]) -> None:
+        """
+        Once the parcel is collected,
+        make the robot reverse,
+        and turn in the appropriate direction.
+        """
+
+        self.backwards_from_parcel()
+
+        x1, y1 = self.curr_node
+        x2, y2 = next_node
+
+        # Decide whether to reverse left or reverse right
+        left_cond1 = (self.dir == 0) and (x2 < x1)
+        left_cond2 = (self.dir == 1) and (y2 > y1)
+        left_cond3 = (self.dir == 2) and (x2 > x1)
+        left_cond4 = (self.dir == 3) and (y2 < y1)
+
+        right_cond1 = (self.dir == 0) and (x2 > x1)
+        right_cond2 = (self.dir == 1) and (y2 < y1)
+        right_cond3 = (self.dir == 2) and (x2 < x1)
+        right_cond4 = (self.dir == 3) and (y2 > y1)
+
+        if left_cond1 or left_cond2 or left_cond3 or left_cond4:
+            self.reverse_left()
+        elif right_cond1 or right_cond2 or right_cond3 or right_cond4:
+            self.reverse_right()
 
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]
