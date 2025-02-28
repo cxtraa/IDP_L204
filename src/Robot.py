@@ -64,7 +64,32 @@ class Robot:
         # The robot should be stationary after reaching the node
         self.left_motor.off()
         self.right_motor.off()
+        
+    def turn_left(self):
+        """
+        Turn the robot 90 deg anticlockwise.
+        """
+        self.dir = (-1 + self.dir) % 4
 
+        # 1. Go forward a bit
+        self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+        self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+        sleep(TIME_FORWARD_AT_TURN)
+        self.left_motor.off()
+        self.right_motor.off()
+
+        # 2. Turn until neither of the middle sensors detect
+        self.right_motor.forward(ROBOT_SPEED_TURN)
+        self.left_motor.reverse(40)
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        
+        # 3. Turn until both of the middle sensors detect
+        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
+            sleep(DELTA_T)
+        
+        self.right_motor.off()
+        self.left_motor.off()
 
     def turn_right(self):
         """
@@ -92,50 +117,50 @@ class Robot:
         
         self.left_motor.off()
         self.right_motor.off()
-        
-    def turn_left(self):
+    
+    def reverse_left(self) -> None:
         """
-        Turn the robot 90 deg anticlockwise.
+        Perform a reverse turn that leaves the robot 90 deg anticlockwise from its original orientation.
         """
-        self.dir = (-1 + self.dir) % 4
-
-        # 1. Go forward a bit
-        self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
-        self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
-        sleep(TIME_FORWARD_AT_TURN)
-        self.left_motor.off()
-        self.right_motor.off()
-
-        # 2. Turn until neither of the middle sensors detect
+        self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.forward(ROBOT_SPEED_TURN)
-        self.left_motor.reverse(40)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
             sleep(DELTA_T)
-        
-        # 3. Turn until both of the middle sensors detect
         while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
             sleep(DELTA_T)
-        
-        self.right_motor.off()
         self.left_motor.off()
+        self.right_motor.off()
+    
+    def reverse_right(self) -> None:
+        """
+        Perform a reverse turn that leaves the robot 90 deg clockwise from its original orientation.
+        """
+        self.right_motor.reverse(ROBOT_SPEED_TURN)
+        self.left_motor.forward(ROBOT_SPEED_TURN)
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
+            sleep(DELTA_T)
+        self.left_motor.off()
+        self.right_motor.off()
     
     def change_dir(self, desired_dir : int):
         """
-        Find the optimal turns to change the direction.
-        E.g. if going from North to East, we should call turn_right() once.
+        Decide whether to call turn_left() or turn_right()
         """
 
+        # We should only ever turn left or right (no 180 deg turns)
         if desired_dir == (self.dir + 1) % 4:
             self.turn_right()
         elif desired_dir == (self.dir - 1) % 4:
             self.turn_left()
-        elif desired_dir == (self.dir + 2) % 4:
-            self.turn_right()
-            self.turn_right()
     
     def move(self, dest : tuple[int, int]):
         """
         Move the robot from the current node to `dest`, where current node and dest are NEIGHBORS.
+
+        1. Orient the robot in the direction it should move.
+        2. Move forward.
         """
         x_1, y_1 = self.curr_node
         x_2, y_2 = dest
@@ -150,62 +175,46 @@ class Robot:
             self.change_dir(2)
         
         self.forward()
-    
-    def lifting_procedure(self) -> None:
-        pass
 
-    def reverse_left(self) -> None:
-        self.left_motor.reverse(ROBOT_SPEED_TURN)
-        self.right_motor.forward(ROBOT_SPEED_TURN)
-        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
-            sleep(DELTA_T)
-        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
-            sleep(DELTA_T)
-        self.left_motor.off()
-        self.right_motor.off()
-    
-    def reverse_right(self) -> None:
-        self.right_motor.reverse(ROBOT_SPEED_TURN)
-        self.left_motor.forward(ROBOT_SPEED_TURN)
-        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
-            sleep(DELTA_T)
-        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
-            sleep(DELTA_T)
-        self.left_motor.off()
-        self.right_motor.off()
-
-    def backwards_from_parcel(self) -> None:
-        # Robot reverses
+    def pickup(self, curr_node : tuple[int, int], dest_node : tuple[int, int]) -> None:
+        
+        # We are at a pickup point, find the node before us (there is only 1) and move to it
+        prev_node = GRAPH[curr_node][0]
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.reverse(ROBOT_SPEED_TURN)
         sleep(TIME_BACKWARDS_AFTER_PARCEL)
-    
-    def go_from_pickup_to_move(self, next_node : tuple[int, int]) -> None:
-        """
-        Once the parcel is collected,
-        make the robot reverse,
-        and turn in the appropriate direction.
-        """
 
-        self.backwards_from_parcel()
+        # Find the next node on our path to the destination node to deliver the parcel
+        path = self.path_finder.find_shortest_path(prev_node, dest_node)
+        next_node = path[1]
+
+        # Perform the pickup turn based on the next node we need to reach
+        self.pickup_turn(next_node)
+    
+    def pickup_turn(self, node : tuple[int, int]) -> None:
+        """
+        Turn in the appropriate direction after collecting the parcel.
+        """
 
         x1, y1 = self.curr_node
-        x2, y2 = next_node
+        x2, y2 = node
 
         # Decide whether to reverse left or reverse right
         left_cond1 = (self.dir == 0) and (x2 < x1)
         left_cond2 = (self.dir == 1) and (y2 > y1)
         left_cond3 = (self.dir == 2) and (x2 > x1)
         left_cond4 = (self.dir == 3) and (y2 < y1)
+        reverse_left = left_cond1 or left_cond2 or left_cond3 or left_cond4
 
         right_cond1 = (self.dir == 0) and (x2 > x1)
         right_cond2 = (self.dir == 1) and (y2 < y1)
         right_cond3 = (self.dir == 2) and (x2 < x1)
         right_cond4 = (self.dir == 3) and (y2 > y1)
+        reverse_right = right_cond1 or right_cond2 or right_cond3 or right_cond4
 
-        if left_cond1 or left_cond2 or left_cond3 or left_cond4:
+        if reverse_left:
             self.reverse_left()
-        elif right_cond1 or right_cond2 or right_cond3 or right_cond4:
+        elif reverse_right:
             self.reverse_right()
 
     def __str__(self) -> str:
