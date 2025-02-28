@@ -14,3 +14,6 @@ class Button:
     def update(self) -> None:
         if ticks_ms() - self.last_debounce_time > BUTTON_DEBOUNCE_TIME:
             self.state = self.read()
+    
+    def irq(self, trigger, handler) -> None:
+        self.__pin_in.irq(trigger, handler)
