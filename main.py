@@ -2,6 +2,7 @@ import sys
 sys.path.append("/src")
 
 from machine import Pin
+from Button import Button
 from Robot import Robot
 from constants import *
 
@@ -17,13 +18,14 @@ def main():
 
     def do_lap():
         robot.navigate((-27, 123))
-    
-    def handle_interrupt(pin):
+        
+    def handle_stop(pin):
         quit()
     
     while True:
-        if robot.start_button.pressed():
-            # robot.start_button.irq(trigger=Pin.IRQ_RISING, handler=handle_interrupt)
+        if start_button.pressed():
+            sleep(0.5)
+            #start_button.irq(trigger=Pin.IRQ_FALLING, handler=handle_stop)
             do_lap()
         sleep(0.1)
 
