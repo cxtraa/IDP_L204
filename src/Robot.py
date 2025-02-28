@@ -5,7 +5,7 @@ from Motor import Motor
 from time import sleep
 
 class Robot:
-    def __init__(self, graph, start_node=(0,0), start_dir=0, sensor_pos = []):
+    def __init__(self, graph: dict[tuple:list[tuple]], start_node=(0,0), start_dir=0, sensor_pos = []):
         """
         The possible robot directions are:
             - 0 North
@@ -72,6 +72,7 @@ class Robot:
         self.right_motor.off()
 
         self.left_motor.forward(50)
+        sleep(0.5) # In case there is a path forwards and right, don't detect the forwards path as finishing the turn
         while not self.control.__tracker_sensors[2].read():
             sleep(0.01)
         
@@ -90,6 +91,7 @@ class Robot:
         self.right_motor.off()
 
         self.right_motor.forward(50)
+        sleep(0.5) # In case there is a path forwards and right, don't detect the forwards path as finishing the turn
         while not self.control.__tracker_sensors[1].read():
             sleep(0.01)
         self.right_motor.off()
