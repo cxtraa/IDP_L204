@@ -48,14 +48,14 @@ class Robot:
                 break
 
         # Move forward for half a second so we don't detect the last junction as a new one
-        self.left_motor.forward(ROBOT_SPEED)
-        self.right_motor.forward(ROBOT_SPEED)
-        sleep(0.5)
+        self.left_motor.forward(ROBOT_SPEED_SLOW)
+        self.right_motor.forward(ROBOT_SPEED_SLOW)
+        sleep(TIME_FORWARD_AT_TURN)
 
         # While we are not at a junction, run both the left and right motor, using PID control to line follow
         while not self.control.at_junction():
-            self.left_motor.forward(ROBOT_SPEED + self.control.get_pid_error())
-            self.right_motor.forward(ROBOT_SPEED - self.control.get_pid_error())
+            self.left_motor.forward(ROBOT_SPEED_FAST + self.control.get_pid_error())
+            self.right_motor.forward(ROBOT_SPEED_FAST - self.control.get_pid_error())
             sleep(DELTA_T)
         
         # The robot should be stationary after reaching the node
@@ -70,13 +70,13 @@ class Robot:
         """
         self.dir = (1 + self.dir) % 4
 
-        self.left_motor.forward(ROBOT_SPEED)
-        self.right_motor.forward(ROBOT_SPEED)
+        self.left_motor.forward(ROBOT_SPEED_SLOW)
+        self.right_motor.forward(ROBOT_SPEED_SLOW)
         sleep(TIME_FORWARD_AT_TURN)
         self.left_motor.off()
         self.right_motor.off()
 
-        self.left_motor.forward(ROBOT_SPEED)
+        self.left_motor.forward(ROBOT_SPEED_SLOW)
         sleep(0.5) # In case there is a path forwards and right, don't detect the forwards path as finishing the turn
         while not self.control.__tracker_sensors[1].read():
             sleep(0.01)
@@ -89,13 +89,13 @@ class Robot:
         """
         self.dir = (-1 + self.dir) % 4
 
-        self.left_motor.forward(ROBOT_SPEED)
-        self.right_motor.forward(ROBOT_SPEED)
+        self.left_motor.forward(ROBOT_SPEED_SLOW)
+        self.right_motor.forward(ROBOT_SPEED_SLOW)
         sleep(TIME_FORWARD_AT_TURN)
         self.left_motor.off()
         self.right_motor.off()
 
-        self.right_motor.forward(ROBOT_SPEED)
+        self.right_motor.forward(ROBOT_SPEED_SLOW)
         sleep(0.5) # In case there is a path forwards and right, don't detect the forwards path as finishing the turn
         while not self.control.__tracker_sensors[2].read():
             sleep(0.01)

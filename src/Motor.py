@@ -17,7 +17,6 @@ class Motor:
         self.pwm.duty_u16(0)
     
     def forward(self, speed : float) -> None:
-        print(f"Speed in forward: {speed}")
         self.dir.value(0)
         self.set_duty_cycle(speed)
     

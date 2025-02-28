@@ -22,8 +22,6 @@ class PathFinder:
             curr_dist, curr_node = heapq.heappop(pq)
             if best[curr_node] < curr_dist:
                 continue
-            if curr_node in visited:
-                continue
             visited.add(curr_node)
             for child_node in self.graph[curr_node]:
                 if child_node not in visited:
@@ -35,6 +33,8 @@ class PathFinder:
                         best[child_node] = new_dist
                         heapq.heappush(pq, (new_dist, child_node))
                         prev[child_node] = curr_node
+        
+        print(best)
         return self.reconstruct_path(prev, node_A, node_B)    
 
     def reconstruct_path(self, prev: tuple[int,int], start: tuple[int,int], end: tuple[int,int]) -> list[tuple[int,int]]:
@@ -50,3 +50,10 @@ class PathFinder:
         path.append(start)
         path.reverse()
         return path      
+
+def main():
+    path_finder = PathFinder(graph=GRAPH)
+    print(path_finder.find_shortest_path((0,-29), (-27, 123)))
+
+if __name__ == "__main__":
+    main()
