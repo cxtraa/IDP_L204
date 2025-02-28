@@ -9,11 +9,12 @@ class Button:
         self.state = 0 # low
 
     def __read(self) -> int:
-        return self.__pin_in.value()
+        self.__update()
+        return self.state
 
     def __update(self) -> None:
         if ticks_ms() - self.last_debounce_time > BUTTON_DEBOUNCE_TIME:
-            self.state = self.__read()
+            self.state = self.__pin_in.value()
     
     def pressed(self) -> bool:
         self.__update()
