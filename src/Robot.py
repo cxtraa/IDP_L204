@@ -54,8 +54,8 @@ class Robot:
 
         # While we are not at a junction, run both the left and right motor, using PID control to line follow
         while not self.control.at_junction():
-            self.left_motor.forward(50 + self.control.get_pid_error())
-            self.right_motor.forward(50 - self.control.get_pid_error())
+            self.left_motor.forward(75 + self.control.get_pid_error())
+            self.right_motor.forward(75 - self.control.get_pid_error())
             sleep(DELTA_T)
         
         # The robot should be stationary after reaching the node
