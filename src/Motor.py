@@ -25,7 +25,6 @@ class Motor:
             percentage = 100
         elif percentage < 0:
             percentage = 0
-        print(f"Percentage: {percentage}")
         duty_cycle = int((2**16 - 1) * (percentage / 100)) # the board expects a 16 bit unsigned integer from 0 - (2^16-1) inclusive
         self.pwm.duty_u16(duty_cycle)
 

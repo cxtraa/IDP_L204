@@ -1,6 +1,5 @@
 
 from constants import GRAPH
-
 import heapq
 
 class PathFinder:

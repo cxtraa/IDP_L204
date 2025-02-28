@@ -16,7 +16,9 @@ def main():
     )
 
     def procedure():
-        robot.reverse_left()
+        robot.navigate((40, 139))
+        robot.pickup((40, 139), (103, -31))
+        robot.navigate((103, -31))
         
     def handle_stop(pin):
         quit()
