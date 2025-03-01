@@ -80,7 +80,7 @@ class Robot:
 
         # 2. Turn until neither of the middle sensors detect
         self.right_motor.forward(ROBOT_SPEED_TURN)
-        self.left_motor.reverse(40)
+        self.left_motor.reverse(ROBOT_SPEED_TURN)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
             sleep(DELTA_T)
         
@@ -107,7 +107,7 @@ class Robot:
 
         # 2. Turn until neither of the middle sensors detect
         self.left_motor.forward(ROBOT_SPEED_TURN)
-        self.right_motor.reverse(40)
+        self.right_motor.reverse(ROBOT_SPEED_TURN)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
             sleep(DELTA_T)
         
@@ -118,7 +118,7 @@ class Robot:
         self.left_motor.off()
         self.right_motor.off()
     
-    def reverse_left(self) -> None:
+    def turn_left_reverse(self) -> None:
         """
         Perform a reverse turn that leaves the robot 90 deg anticlockwise from its original orientation.
         """
@@ -131,7 +131,7 @@ class Robot:
         self.left_motor.off()
         self.right_motor.off()
     
-    def reverse_right(self) -> None:
+    def turn_right_reverse(self) -> None:
         """
         Perform a reverse turn that leaves the robot 90 deg clockwise from its original orientation.
         """
@@ -143,6 +143,22 @@ class Robot:
             sleep(DELTA_T)
         self.left_motor.off()
         self.right_motor.off()
+
+    def turn_180_left(self) -> None:
+        """
+        Do a 180 deg turn anticlockwise.
+        """
+        self.right_motor.forward(ROBOT_SPEED_TURN)
+        self.left_motor.reverse(ROBOT_SPEED_TURN)
+        sleep(TIME_FOR_180_TURN)
+    
+    def turn_180_right(self) -> None:
+        """
+        Do a 180 deg turn clockwise.
+        """
+        self.left_motor.forward(ROBOT_SPEED_TURN)
+        self.right_motor.reverse(ROBOT_SPEED_TURN)
+        sleep(TIME_FOR_180_TURN)
     
     def change_dir(self, desired_dir : int):
         """
@@ -176,10 +192,16 @@ class Robot:
         
         self.forward()
 
-    def pickup(self, curr_node : tuple[int, int], dest_node : tuple[int, int]) -> None:
-        
+    def pickup_parcel(self, dest_node : tuple[int, int]) -> int:
+        """
+        Robot procedure for picking up a parcel.
+        0 - no parcel found
+        1 - red/yellow
+        2 - blue/green
+        """
+
         # We are at a pickup point, find the node before us (there is only 1) and move to it
-        prev_node = GRAPH[curr_node][0]
+        prev_node = GRAPH[self.curr_node][0]
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.reverse(ROBOT_SPEED_TURN)
         sleep(TIME_BACKWARDS_AFTER_PARCEL)
@@ -190,6 +212,8 @@ class Robot:
 
         # Perform the pickup turn based on the next node we need to reach
         self.pickup_turn(next_node)
+
+        return 0
     
     def pickup_turn(self, node : tuple[int, int]) -> None:
         """
@@ -216,6 +240,18 @@ class Robot:
             self.reverse_left()
         elif reverse_right:
             self.reverse_right()
+
+    def depot_procedure(self, next_node : tuple[int, int]) -> None:
+        self.deposit_parcel() # Procedure for depositing the parcel
+
+        if self.curr_node == (-104, 0): # bottom-left depot
+            if next_node == (-104, 88):
+                self.turn_right_reverse() # need to perform reverse turn
+        elif self.curr_node == (103, 0): # bottom-right depot
+            if next_node == (103, 88):
+                self.turn_left_reverse()
+        
+        # From here, the robot can navigate normally.
 
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]

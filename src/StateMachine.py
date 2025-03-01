@@ -5,52 +5,30 @@ from Motor import Motor
 from time import sleep
 from Robot import Robot
 
-class Statemachine:
+class StateMachine:
     
-    def __init__(self, robot):
-        self.robot = robot
-        self.pickup_point_init = 0  # Initialize pickup point counter
-    
-    def driveToPickup(self):
-        pickup_points = [pickup_1, pickup_2, pickup_3, pickup_4]
-        self.robot.navigate(pickup_points[self.pickup_point_init])
-        self.pickup_point_init = (1 + self.pickup_point_init) % 4
-        print("Driving to pickup point...")
-        sleep(1)
+    def __init__(self):
+        self.robot = Robot(
+            graph=GRAPH,
+            start_node=(0, -29),
+            start_dir=0,
+            sensor_pos=SENSOR_POS
+        )
+        self.i = 0  # Represents which pickup point we are at (0, 1, 2, 3)
+        self.num_empty_parcel = 0
+        self.should_end = False
 
-    def detectPackage(self):
-        print("Checking for package...")
-        return True
-
-    def pickUpPackage(self):
-        print("Picking up package...")
-        sleep(1)
-
-    def getPackageColour(self):
-        return "blue"
-
-    def getDepotForColour(self, colour):
-        return 1 if colour in ["blue", "green"] else 2
-
-    def driveToDepot(self, depot):
-        print(f"Driving to Depot {depot}...")
-        self.robot.navigate(depot)
-        sleep(1)
-
-    def dropOffPackage(self):
-        print("Dropping off package...")
-        sleep(1)
-
-    def driveToStart(self):
-        print("Returning to start box...")
-        self.robot.navigate(start_point)
-        sleep(1)
-
-    def stopMotors(self):
-        print("Motors stopped.")
-        self.robot.left_motor.off()
-        self.robot.right_motor.off()
-
-
-
-    
+    def update(self) -> None:
+        self.robot.navigate(PICKUP_POINTS[self.i])
+        parcel_status = self.robot.pickup()
+        if parcel_status == 1:
+            self.robot.navigate(DEPOT_RED_YELLOW)
+            self.robot.depot_procedure()
+        elif parcel_status == 2:
+            self.robot.navigate(DEPOT_BLUE_GREEN)
+            self.robot.depot_procedure()
+        else:
+            self.num_empty_parcel += 1
+            if self.num_empty_parcel == 4:
+                self.should_end = True
+        self.i = (self.i + 1) % 4   
