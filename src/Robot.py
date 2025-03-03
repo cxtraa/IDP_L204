@@ -4,6 +4,7 @@ from Control import Control
 from Motor import Motor
 from Button import Button
 from time import sleep
+from  warnings import warn
 
 class Robot:
     def __init__(self, graph: dict[tuple:list[tuple]], start_node=(0,0), start_dir=0, sensor_pos = []):
@@ -92,6 +93,7 @@ class Robot:
         DEPRECATED: use forward_turn_90 instead.
         Turn the robot 90 deg anticlockwise.
         """
+        warn("Deprecated: Use forward_turn_90 instead.", DeprecationWarning)
         self.dir = (-1 + self.dir) % 4
 
         # 1. Go forward a bit
@@ -120,6 +122,7 @@ class Robot:
         Make a 90 deg turn clockwise.
         This works by powering left wheel until a line is detected.
         """
+        warn("Deprecated: Use forward_turn_90 instead.", DeprecationWarning)
         self.dir = (1 + self.dir) % 4
 
         # 1. Go forward a bit
@@ -169,6 +172,7 @@ class Robot:
         DEPRECATED: use reverse_turn_90 instead.
         Perform a reverse turn that leaves the robot 90 deg anticlockwise from its original orientation.
         """
+        warn("Deprecated: Use reverse_turn_90 instead.", DeprecationWarning)
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.forward(ROBOT_SPEED_TURN)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
@@ -183,6 +187,7 @@ class Robot:
         DEPRECATED: use reverse_turn_90 instead.
         Perform a reverse turn that leaves the robot 90 deg clockwise from its original orientation.
         """
+        warn("Deprecated: Use reverse_turn_90 instead.", DeprecationWarning)
         self.right_motor.reverse(ROBOT_SPEED_TURN)
         self.left_motor.forward(ROBOT_SPEED_TURN)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
@@ -218,6 +223,8 @@ class Robot:
             self.forward_turn_90(0) # Turn right
         elif desired_dir == (self.dir - 1) % 4:
             self.forward_turn_90(1) # Turn left
+        else:
+            raise(ValueError("Invalid direction: must be 1 or -1 from current direction for change_dir()"))
     
     def move(self, dest : tuple[int, int]):
         """
@@ -308,6 +315,12 @@ class Robot:
                 self.reverse_turn_90(0)
         
         # From here, the robot can navigate normally.
+    
+    def deposit_parcel():
+        """
+        Robot procedure for depositing a parcel.
+        """
+        raise Warning
 
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]
