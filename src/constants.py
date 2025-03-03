@@ -74,3 +74,11 @@ pickup_3 = (-27,123)
 pickup_4 = (40,139)
 
 start_point = (0,-29)
+
+# Colour readings
+COLOUR_READINGS = {
+    (2783.53, -1.05657): 0, # Red
+    (8890.354, 0.5218): 1, # Yellow
+    (1672.447, -0.73191): 2, # Green
+    (4518.424, 0.11455): 3 # Blue
+}
