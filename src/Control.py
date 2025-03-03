@@ -5,10 +5,6 @@ from constants import *
 from math import copysign
 
 class Control:
-    K_P = 2.5
-    K_D = 0.02
-    K_I = 12
-
     def __init__(self, sensor_pos: list[float]):
         # Tracker sensors should be ordered from left to right
         self.__tracker_sensors = [

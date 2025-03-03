@@ -197,23 +197,22 @@ class Robot:
         self.left_motor.off()
         self.right_motor.off()
 
-    def turn_180_left(self) -> None:
+    def turn_180(self, dir : int = 0) -> None:
         """
-        Do a 180 deg turn anticlockwise.
+        Turn 180 degrees.
+        0 = left (anticlockwise)
+        1 = right (clockwise)
         """
-        self.dir = (self.dir - 2) % 4
-        self.right_motor.forward(ROBOT_SPEED_TURN)
-        self.left_motor.reverse(ROBOT_SPEED_TURN)
-        sleep(TIME_FOR_180_TURN)
-    
-    def turn_180_right(self) -> None:
-        """
-        Do a 180 deg turn clockwise.
-        """
-        self.dir = (self.dir + 2) % 4
-        self.left_motor.forward(ROBOT_SPEED_TURN)
-        self.right_motor.reverse(ROBOT_SPEED_TURN)
-        sleep(TIME_FOR_180_TURN)
+        inside_motor = self.left_motor if dir == 0 else self.right_motor
+        outside_motor = self.right_motor if dir == 0 else self.left_motor
+
+        inside_motor.reverse(ROBOT_SPEED_TURN)
+        outside_motor.forward(ROBOT_SPEED_TURN)
+
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
+            sleep(DELTA_T)
     
     def change_dir(self, desired_dir : int):
         """
@@ -249,7 +248,11 @@ class Robot:
         
         self.forward()
 
-    def pickup_parcel(self, dest_node : tuple[int, int] = DEPOT_RED_YELLOW) -> int:
+    def detect_parcel_color(self) -> int:
+        # TODO : return the parcel color
+        return RED_YELLOW
+
+    def pickup_parcel(self) -> int:
         """
         Robot procedure for picking up a parcel.
         0 - no parcel found
@@ -258,6 +261,11 @@ class Robot:
         """
 
         # TODO detect colour via sensor and determine which depot to navigate to
+        color = self.detect_parcel_color()
+        if color == RED_YELLOW:
+            dest_node = DEPOT_RED_YELLOW
+        elif color == BLUE_GREEN:
+            dest_node = DEPOT_BLUE_GREEN
 
         # We are at a pickup point, find the node before us (there is only 1) and move to it
         prev_node = GRAPH[self.curr_node][0]
@@ -273,8 +281,6 @@ class Robot:
         new_dir = self.pickup_turn(next_node)
         self.dir = new_dir
         self.curr_node = prev_node
-
-        return NO_PARCEL
     
     def pickup_turn(self, node : tuple[int, int]) -> int:
         """
@@ -311,16 +317,7 @@ class Robot:
         return
 
     def depot_procedure(self, next_node : tuple[int, int]) -> None:
-        # self.deposit_parcel() # Procedure for depositing the parcel
 
-        if self.curr_node == DEPOT_RED_YELLOW: # bottom-left depot
-            if next_node == (-104, 88):
-                self.reverse_turn_90(1) # need to perform reverse turn
-        elif self.curr_node == (103, 0): # bottom-right depot
-            if next_node == (103, 88):
-                self.reverse_turn_90(0)
-        
-        # From here, the robot can navigate normally.
     
     def deposit_parcel():
         """
