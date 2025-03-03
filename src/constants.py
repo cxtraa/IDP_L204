@@ -37,6 +37,9 @@ NO_PARCEL = 0
 RED_YELLOW = 1
 BLUE_GREEN = 2
 
+LEFT = 0
+RIGHT = 1
+
 # Pin configuration
 IR1_PIN = 8
 IR2_PIN = 9

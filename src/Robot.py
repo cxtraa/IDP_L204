@@ -70,12 +70,14 @@ class Robot:
         """Turn the robot 90 degrees in the direction indicated by dir.
         0 - left
         1 - right"""
-        if dir == 0:
+        if dir == LEFT:
             outside_motor = self.right_motor
             inside_motor = self.left_motor
-        elif dir == 1:
+            self.dir = (self.dir - 1) % 4
+        elif dir == RIGHT:
             outside_motor = self.left_motor
             inside_motor = self.right_motor
+            self.dir = (self.dir + 1) % 4
         else:
             raise(ValueError("Invalid direction: dir must be 0 (left) or 1 (right)"))
         
@@ -145,19 +147,23 @@ class Robot:
         self.left_motor.off()
         self.right_motor.off()
 
-    def reverse_turn_90(self, dir: int = 0) -> None:
-        """Turn the robot 90 degrees in the direction indicated by dir.
-        0 - left
-        1 - right"""
-        if dir == 0:
+    def reverse_turn_90(self, dir: int = LEFT) -> None:
+        """Turn the robot 90 degrees in the direction indicated by dir."""
+        if dir == LEFT:
             outside_motor = self.left_motor
             inside_motor = self.right_motor
-        elif dir == 1:
+            self.dir = (self.dir - 1) % 4
+        elif dir == RIGHT:
             outside_motor = self.right_motor
             inside_motor = self.left_motor
+            self.dir = (self.dir + 1) % 4
         else:
             raise(ValueError("Invalid direction: dir must be 0 (left) or 1 (right)"))
         
+        # Sharp 90 degree turn
+        # outside_motor.forward(ROBOT_SPEED_TURN)
+        # inside_motor.reverse(ROBOT_SPEED_TURN)
+
         outside_motor.reverse(OUTSIDE_MOTOR_TURN_SPEED)
         inside_motor.reverse(INSIDE_MOTOR_TURN_SPEED)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
@@ -166,6 +172,34 @@ class Robot:
             sleep(DELTA_T)
         outside_motor.off()
         inside_motor.off()
+
+    def turn_180(self, dir : int = LEFT) -> None:
+        """
+        Turn 180 degrees.
+        0 = left (anticlockwise)
+        1 = right (clockwise)
+        """
+        if dir == LEFT:
+            inside_motor = self.left_motor
+            outside_motor = self.right_motor
+            self.dir = (self.dir - 2) % 4
+        elif dir == RIGHT:
+            inside_motor = self.right_motor
+            outside_motor = self.left_motor
+            self.dir = (self.dir + 2) % 4
+
+        # Sharp turn
+        # inside_motor.reverse(ROBOT_SPEED_TURN)
+        # outside_motor.forward(ROBOT_SPEED_TURN)
+
+        # Arc turn
+        inside_motor.forward(INSIDE_MOTOR_TURN_SPEED)
+        outside_motor.forward(OUTSIDE_MOTOR_TURN_SPEED)
+
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
+            sleep(DELTA_T)
     
     def turn_left_reverse(self) -> None:
         """
@@ -197,23 +231,6 @@ class Robot:
         self.left_motor.off()
         self.right_motor.off()
 
-    def turn_180(self, dir : int = 0) -> None:
-        """
-        Turn 180 degrees.
-        0 = left (anticlockwise)
-        1 = right (clockwise)
-        """
-        inside_motor = self.left_motor if dir == 0 else self.right_motor
-        outside_motor = self.right_motor if dir == 0 else self.left_motor
-
-        inside_motor.reverse(ROBOT_SPEED_TURN)
-        outside_motor.forward(ROBOT_SPEED_TURN)
-
-        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
-            sleep(DELTA_T)
-        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
-            sleep(DELTA_T)
-    
     def change_dir(self, desired_dir : int):
         """
         Decide whether to call turn_left() or turn_right()
@@ -221,11 +238,13 @@ class Robot:
 
         # We should only ever turn left or right (no 180 deg turns)
         if desired_dir == (self.dir + 1) % 4:
-            self.forward_turn_90(0) # Turn right
+            self.forward_turn_90(RIGHT) # Turn right
         elif desired_dir == (self.dir - 1) % 4:
-            self.forward_turn_90(1) # Turn left
+            self.forward_turn_90(LEFT) # Turn left
+        elif desired_dir == (self.dir + 2) % 4:
+            self.turn_180(RIGHT)
         else:
-            raise(ValueError("Invalid direction: must be 1 or -1 from current direction for change_dir()"))
+            self.turn_180(LEFT)
     
     def move(self, dest : tuple[int, int]):
         """
@@ -248,7 +267,15 @@ class Robot:
         
         self.forward()
 
-    def pickup_parcel(self) -> tuple[int, int] | None:
+    def get_depot_to_goto(self) -> int | None:
+        """
+        TODO: color sensing logic should go here.
+        can return:
+        DEPOT_RED_YELLOW, DEPOT_BLUE_GREEN, None
+        """
+        return DEPOT_RED_YELLOW
+
+    def pickup_parcel(self, next_pickup_location : tuple[int, int]) -> tuple[int, int] | None:
         """
         Robot procedure for picking up a parcel. Returns the destination depot, or None if there is no parcel.
         0 - no parcel found
@@ -256,7 +283,10 @@ class Robot:
         2 - blue/green
         """
         
-        dest_depot = DEPOT_RED_YELLOW # TODO detect colour via sensor and determine which depot to navigate to, return None if no package
+        dest_node = self.get_depot_to_goto()
+        # If get_depo_to_goto returns None, it means we need to go to the next pickup location.
+        if not dest_node:
+            dest_node = next_pickup_location
 
         # We are at a pickup point, find the node before us (there is only 1) and move to it
         prev_node = GRAPH[self.curr_node][0]
@@ -265,17 +295,16 @@ class Robot:
         sleep(TIME_BACKWARDS_AFTER_PARCEL)
 
         # Find the next node on our path to the destination node to deliver the parcel
-        path = self.path_finder.find_shortest_path(prev_node, dest_depot)
+        path = self.path_finder.find_shortest_path(prev_node, dest_node)
         next_node = path[1]
 
         # Perform the pickup turn based on the next node we need to reach
-        new_dir = self.pickup_turn(next_node)
-        self.dir = new_dir
+        self.pickup_turn(next_node)
         self.curr_node = prev_node
 
-        return dest_depot
+        return dest_node
     
-    def pickup_turn(self, node : tuple[int, int]) -> int:
+    def pickup_turn(self, node : tuple[int, int]):
         """
         Turn in the appropriate direction after collecting the parcel.
         """
@@ -297,20 +326,27 @@ class Robot:
         reverse_right = right_cond1 or right_cond2 or right_cond3 or right_cond4
 
         if reverse_left:
-            new_dir = (self.dir - 1) % 4
-            self.reverse_turn_90(0) # Reverse turn left
+            self.reverse_turn_90(LEFT)
         elif reverse_right:
-            new_dir = (self.dir + 1) % 4
-            self.reverse_turn_90(1) # Reverse turn right
+            self.reverse_turn_90(RIGHT) # Reverse turn right
+
+    def depot_procedure(self, depot : int) -> None:
+
+        self.deposit_parcel()
         
-        return new_dir
+        self.left_motor.reverse(ROBOT_SPEED_TURN)
+        self.right_motor.reverse(ROBOT_SPEED_TURN)
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        self.left_motor.off()
+        self.right_motor.off()
 
-    def deposit_parcel(self) -> None:
-        # TODO: Implement depositing parcel procedure
-        return
+        if depot == DEPOT_RED_YELLOW:
+            self.turn_180(LEFT)
+        elif depot == DEPOT_BLUE_GREEN:
+            self.turn_180(RIGHT)
 
-    def depot_procedure(self, next_node : tuple[int, int]) -> None:
-
+        self.forward()
     
     def deposit_parcel():
         """
