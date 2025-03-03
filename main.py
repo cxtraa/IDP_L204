@@ -13,7 +13,7 @@ def main():
         try:
             state_machine.update()
         except Exception as e:
-            print(type(e), e)
+            sys.print_exception(e)
             break
     state_machine.stop()
     print("Finished")
