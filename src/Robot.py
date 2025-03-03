@@ -4,6 +4,7 @@ from Control import Control
 from Motor import Motor
 from Button import Button
 from time import sleep
+from  warnings import warn
 
 class Robot:
     def __init__(self, graph: dict[tuple:list[tuple]], start_node=(0,0), start_dir=0, sensor_pos = []):
@@ -64,11 +65,35 @@ class Robot:
         # The robot should be stationary after reaching the node
         self.left_motor.off()
         self.right_motor.off()
+    
+    def forward_turn_90(self, dir: int = 0) -> None:
+        """Turn the robot 90 degrees in the direction indicated by dir.
+        0 - left
+        1 - right"""
+        if dir == 0:
+            outside_motor = self.right_motor
+            inside_motor = self.left_motor
+        elif dir == 1:
+            outside_motor = self.left_motor
+            inside_motor = self.right_motor
+        else:
+            raise(ValueError("Invalid direction: dir must be 0 (left) or 1 (right)"))
+        
+        outside_motor.forward(OUTSIDE_MOTOR_TURN_SPEED)
+        inside_motor.forward(INSIDE_MOTOR_TURN_SPEED)
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
+            sleep(DELTA_T)
+        outside_motor.off()
+        inside_motor.off()
         
     def turn_left(self):
         """
+        DEPRECATED: use forward_turn_90 instead.
         Turn the robot 90 deg anticlockwise.
         """
+        warn("Deprecated: Use forward_turn_90 instead.", DeprecationWarning)
         self.dir = (-1 + self.dir) % 4
 
         # 1. Go forward a bit
@@ -93,9 +118,11 @@ class Robot:
 
     def turn_right(self):
         """
+        DEPRECATED: use forward_turn_90 instead.
         Make a 90 deg turn clockwise.
         This works by powering left wheel until a line is detected.
         """
+        warn("Deprecated: Use forward_turn_90 instead.", DeprecationWarning)
         self.dir = (1 + self.dir) % 4
 
         # 1. Go forward a bit
@@ -117,12 +144,35 @@ class Robot:
         
         self.left_motor.off()
         self.right_motor.off()
+
+    def reverse_turn_90(self, dir: int = 0) -> None:
+        """Turn the robot 90 degrees in the direction indicated by dir.
+        0 - left
+        1 - right"""
+        if dir == 0:
+            outside_motor = self.left_motor
+            inside_motor = self.right_motor
+        elif dir == 1:
+            outside_motor = self.right_motor
+            inside_motor = self.left_motor
+        else:
+            raise(ValueError("Invalid direction: dir must be 0 (left) or 1 (right)"))
+        
+        outside_motor.reverse(OUTSIDE_MOTOR_TURN_SPEED)
+        inside_motor.reverse(INSIDE_MOTOR_TURN_SPEED)
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
+            sleep(DELTA_T)
+        outside_motor.off()
+        inside_motor.off()
     
     def turn_left_reverse(self) -> None:
         """
+        DEPRECATED: use reverse_turn_90 instead.
         Perform a reverse turn that leaves the robot 90 deg anticlockwise from its original orientation.
         """
-        self.dir = (self.dir - 1) % 4
+        warn("Deprecated: Use reverse_turn_90 instead.", DeprecationWarning)
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.forward(ROBOT_SPEED_TURN)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
@@ -134,9 +184,10 @@ class Robot:
     
     def turn_right_reverse(self) -> None:
         """
+        DEPRECATED: use reverse_turn_90 instead.
         Perform a reverse turn that leaves the robot 90 deg clockwise from its original orientation.
         """
-        self.dir = (self.dir + 1) % 4
+        warn("Deprecated: Use reverse_turn_90 instead.", DeprecationWarning)
         self.right_motor.reverse(ROBOT_SPEED_TURN)
         self.left_motor.forward(ROBOT_SPEED_TURN)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
@@ -171,9 +222,11 @@ class Robot:
 
         # We should only ever turn left or right (no 180 deg turns)
         if desired_dir == (self.dir + 1) % 4:
-            self.turn_right()
+            self.forward_turn_90(0) # Turn right
         elif desired_dir == (self.dir - 1) % 4:
-            self.turn_left()
+            self.forward_turn_90(1) # Turn left
+        else:
+            raise(ValueError("Invalid direction: must be 1 or -1 from current direction for change_dir()"))
     
     def move(self, dest : tuple[int, int]):
         """
@@ -246,10 +299,10 @@ class Robot:
 
         if reverse_left:
             new_dir = (self.dir - 1) % 4
-            self.turn_left_reverse()
+            self.reverse_turn_90(0) # Reverse turn left
         elif reverse_right:
             new_dir = (self.dir + 1) % 4
-            self.turn_right_reverse()
+            self.reverse_turn_90(1) # Reverse turn right
         
         return new_dir
 
@@ -262,12 +315,19 @@ class Robot:
 
         if self.curr_node == DEPOT_RED_YELLOW: # bottom-left depot
             if next_node == (-104, 88):
-                self.turn_right_reverse() # need to perform reverse turn
-        elif self.curr_node == DEPOT_BLUE_GREEN: # bottom-right depot
+                self.reverse_turn_90(1) # need to perform reverse turn
+        elif self.curr_node == (103, 0): # bottom-right depot
             if next_node == (103, 88):
-                self.turn_left_reverse()
+                self.reverse_turn_90(0)
         
         # From here, the robot can navigate normally.
+    
+    def deposit_parcel():
+        """
+        Robot procedure for depositing a parcel.
+        """
+        warn("Not implemented: deposit_parcel() is a placeholder function.", Warning)
+        pass
 
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]
