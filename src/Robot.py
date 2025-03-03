@@ -249,7 +249,7 @@ class Robot:
 
     def pickup_parcel(self) -> tuple[int, int] | None:
         """
-        Robot procedure for picking up a parcel.
+        Robot procedure for picking up a parcel. Returns the destination depot, or None if there is no parcel.
         0 - no parcel found
         1 - red/yellow
         2 - blue/green
