@@ -33,6 +33,13 @@ PICKUP_POINTS = [(-34, 32), (32, 66), (-27, 123), (40, 139)]
 DEPOT_RED_YELLOW = (-104, -31)
 DEPOT_BLUE_GREEN = (103, -31)
 
+NO_PARCEL = 0
+RED_YELLOW = 1
+BLUE_GREEN = 2
+
+LEFT = 0
+RIGHT = 1
+
 # Pin configuration
 IR1_PIN = 8
 IR2_PIN = 9
@@ -51,8 +58,8 @@ ROBOT_WIDTH = 190
 
 # Movement parameters
 K_P = 25.0
-K_D = 1.0
-K_I = 0.01
+K_D = 0
+K_I = 0
 TIME_FORWARD_AT_TURN = 1.5
 TIME_BACKWARDS_AFTER_PARCEL = 1.5
 TIME_FOR_180_TURN = 4.0

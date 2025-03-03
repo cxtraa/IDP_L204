@@ -20,15 +20,18 @@ class StateMachine:
 
     def update(self) -> None:
         self.robot.navigate(PICKUP_POINTS[self.i])
-        dest_depot = self.robot.pickup_parcel()
-        if dest_depot is not None:
-            self.robot.navigate(dest_depot)
+        dest_node = self.robot.pickup_parcel(next_pickup_location=PICKUP_POINTS[(self.i + 1) % 4])
+        self.robot.navigate(dest_node)
+        if dest_node == DEPOT_RED_YELLOW or dest_node == DEPOT_BLUE_GREEN:
             self.robot.depot_procedure()
         else:
             self.num_empty_parcel += 1
             if self.num_empty_parcel == 4:
                 self.should_end = True
-        self.i = (self.i + 1) % 4   
+        self.i = (self.i + 1) % 4
+
+    def back_to_start(self) -> None:
+        self.robot.navigate((0, -29))  
 
     def stop(self) -> None:
         self.robot.left_motor.off()
