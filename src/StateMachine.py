@@ -20,12 +20,9 @@ class StateMachine:
 
     def update(self) -> None:
         self.robot.navigate(PICKUP_POINTS[self.i])
-        parcel_status = self.robot.pickup_parcel()
-        if parcel_status == 1:
-            self.robot.navigate(DEPOT_RED_YELLOW)
-            self.robot.depot_procedure()
-        elif parcel_status == 2:
-            self.robot.navigate(DEPOT_BLUE_GREEN)
+        dest_depot = self.robot.pickup_parcel()
+        if dest_depot is not None:
+            self.robot.navigate(dest_depot)
             self.robot.depot_procedure()
         else:
             self.num_empty_parcel += 1
