@@ -320,7 +320,8 @@ class Robot:
         """
         Robot procedure for depositing a parcel.
         """
-        raise Warning
+        warn("Not implemented: deposit_parcel() is a placeholder function.", Warning)
+        pass
 
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]
