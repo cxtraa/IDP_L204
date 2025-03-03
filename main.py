@@ -13,7 +13,7 @@ def main():
         try:
             state_machine.update()
         except Exception as e:
-            print(e.with_traceback())
+            print(type(e), e)
             break
     state_machine.stop()
     print("Finished")
