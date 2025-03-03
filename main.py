@@ -18,8 +18,10 @@ def main():
         except Exception as e:
             sys.print_exception(e)
             break
+    
+    state_machine.back_to_start()
     state_machine.stop()
-    print("Finished")
+    print("Program finished successfully.")
 
 if __name__ == "__main__":
     main()
