@@ -32,3 +32,7 @@ class StateMachine:
             if self.num_empty_parcel == 4:
                 self.should_end = True
         self.i = (self.i + 1) % 4   
+
+    def stop(self) -> None:
+        self.robot.left_motor.off()
+        self.robot.right_motor.off()

@@ -10,7 +10,13 @@ from time import sleep
 def main():
     state_machine = StateMachine()
     while not state_machine.should_end:
-        state_machine.update()
+        try:
+            state_machine.update()
+        except Exception as e:
+            print(e.with_traceback())
+            break
+    state_machine.stop()
+    print("Finished")
 
 if __name__ == "__main__":
     main()
