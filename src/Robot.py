@@ -248,24 +248,15 @@ class Robot:
         
         self.forward()
 
-    def detect_parcel_color(self) -> int:
-        # TODO : return the parcel color
-        return RED_YELLOW
-
-    def pickup_parcel(self) -> int:
+    def pickup_parcel(self) -> tuple[int, int] | None:
         """
-        Robot procedure for picking up a parcel.
+        Robot procedure for picking up a parcel. Returns the destination depot, or None if there is no parcel.
         0 - no parcel found
         1 - red/yellow
         2 - blue/green
         """
-
-        # TODO detect colour via sensor and determine which depot to navigate to
-        color = self.detect_parcel_color()
-        if color == RED_YELLOW:
-            dest_node = DEPOT_RED_YELLOW
-        elif color == BLUE_GREEN:
-            dest_node = DEPOT_BLUE_GREEN
+        
+        dest_depot = DEPOT_RED_YELLOW # TODO detect colour via sensor and determine which depot to navigate to, return None if no package
 
         # We are at a pickup point, find the node before us (there is only 1) and move to it
         prev_node = GRAPH[self.curr_node][0]
@@ -274,13 +265,15 @@ class Robot:
         sleep(TIME_BACKWARDS_AFTER_PARCEL)
 
         # Find the next node on our path to the destination node to deliver the parcel
-        path = self.path_finder.find_shortest_path(prev_node, dest_node)
+        path = self.path_finder.find_shortest_path(prev_node, dest_depot)
         next_node = path[1]
 
         # Perform the pickup turn based on the next node we need to reach
         new_dir = self.pickup_turn(next_node)
         self.dir = new_dir
         self.curr_node = prev_node
+
+        return dest_depot
     
     def pickup_turn(self, node : tuple[int, int]) -> int:
         """

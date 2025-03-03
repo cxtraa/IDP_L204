@@ -20,7 +20,11 @@ class StateMachine:
 
     def update(self) -> None:
         self.robot.navigate(PICKUP_POINTS[self.i])
-        
+        dest_depot = self.robot.pickup_parcel()
+        if dest_depot is not None:
+            self.robot.navigate(dest_depot)
+            self.robot.depot_procedure()
+        else:
             self.num_empty_parcel += 1
             if self.num_empty_parcel == 4:
                 self.should_end = True
