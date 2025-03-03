@@ -236,14 +236,13 @@ class Robot:
         Decide whether to call turn_left() or turn_right()
         """
 
-        # We should only ever turn left or right (no 180 deg turns)
         if desired_dir == (self.dir + 1) % 4:
             self.forward_turn_90(RIGHT) # Turn right
         elif desired_dir == (self.dir - 1) % 4:
             self.forward_turn_90(LEFT) # Turn left
         elif desired_dir == (self.dir + 2) % 4:
             self.turn_180(RIGHT)
-        else:
+        elif desired_dir == (self.dir - 2) % 4:
             self.turn_180(LEFT)
     
     def move(self, dest : tuple[int, int]):
@@ -284,7 +283,6 @@ class Robot:
         """
         
         dest_node = self.get_depot_to_goto()
-        # If get_depo_to_goto returns None, it means we need to go to the next pickup location.
         if not dest_node:
             dest_node = next_pickup_location
 
@@ -334,19 +332,19 @@ class Robot:
 
         self.deposit_parcel()
         
-        self.left_motor.reverse(ROBOT_SPEED_TURN)
-        self.right_motor.reverse(ROBOT_SPEED_TURN)
-        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
-            sleep(DELTA_T)
-        self.left_motor.off()
-        self.right_motor.off()
+        # Manual movement control in case change_dir doesn't work
+        # self.left_motor.reverse(ROBOT_SPEED_TURN)
+        # self.right_motor.reverse(ROBOT_SPEED_TURN)
+        # while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+        #     sleep(DELTA_T)
+        # self.left_motor.off()
+        # self.right_motor.off()
 
-        if depot == DEPOT_RED_YELLOW:
-            self.turn_180(LEFT)
-        elif depot == DEPOT_BLUE_GREEN:
-            self.turn_180(RIGHT)
-
-        self.forward()
+        # if depot == DEPOT_RED_YELLOW:
+        #     self.turn_180(LEFT)
+        # elif depot == DEPOT_BLUE_GREEN:
+        #     self.turn_180(RIGHT)
+        # self.forward()
     
     def deposit_parcel():
         """
