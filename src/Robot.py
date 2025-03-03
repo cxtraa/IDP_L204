@@ -223,8 +223,8 @@ class Robot:
             self.forward_turn_90(0) # Turn right
         elif desired_dir == (self.dir - 1) % 4:
             self.forward_turn_90(1) # Turn left
-        else:
-            raise(ValueError("Invalid direction: must be 1 or -1 from current direction for change_dir()"))
+        elif desired_dir != self.dir:
+            raise(ValueError("Invalid direction: must be within 1 or -1 from current direction for change_dir()"))
     
     def move(self, dest : tuple[int, int]):
         """
