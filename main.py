@@ -9,6 +9,9 @@ from time import sleep
 
 def main():
     state_machine = StateMachine()
+    while not state_machine.robot.start_button.pressed():
+        sleep(DELTA_T)
+        
     while not state_machine.should_end:
         try:
             state_machine.update()

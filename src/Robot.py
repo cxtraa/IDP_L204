@@ -122,6 +122,7 @@ class Robot:
         """
         Perform a reverse turn that leaves the robot 90 deg anticlockwise from its original orientation.
         """
+        self.dir = (self.dir - 1) % 4
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.forward(ROBOT_SPEED_TURN)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
@@ -135,6 +136,7 @@ class Robot:
         """
         Perform a reverse turn that leaves the robot 90 deg clockwise from its original orientation.
         """
+        self.dir = (self.dir + 1) % 4
         self.right_motor.reverse(ROBOT_SPEED_TURN)
         self.left_motor.forward(ROBOT_SPEED_TURN)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
@@ -148,6 +150,7 @@ class Robot:
         """
         Do a 180 deg turn anticlockwise.
         """
+        self.dir = (self.dir - 2) % 4
         self.right_motor.forward(ROBOT_SPEED_TURN)
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         sleep(TIME_FOR_180_TURN)
@@ -156,6 +159,7 @@ class Robot:
         """
         Do a 180 deg turn clockwise.
         """
+        self.dir = (self.dir + 2) % 4
         self.left_motor.forward(ROBOT_SPEED_TURN)
         self.right_motor.reverse(ROBOT_SPEED_TURN)
         sleep(TIME_FOR_180_TURN)
@@ -217,7 +221,7 @@ class Robot:
         self.dir = new_dir
         self.curr_node = prev_node
 
-        return 0
+        return NO_PARCEL
     
     def pickup_turn(self, node : tuple[int, int]) -> int:
         """
@@ -249,13 +253,17 @@ class Robot:
         
         return new_dir
 
-    def depot_procedure(self, next_node : tuple[int, int]) -> None:
-        self.deposit_parcel() # Procedure for depositing the parcel
+    def deposit_parcel(self) -> None:
+        # TODO: Implement depositing parcel procedure
+        return
 
-        if self.curr_node == (-104, 0): # bottom-left depot
+    def depot_procedure(self, next_node : tuple[int, int]) -> None:
+        # self.deposit_parcel() # Procedure for depositing the parcel
+
+        if self.curr_node == DEPOT_RED_YELLOW: # bottom-left depot
             if next_node == (-104, 88):
                 self.turn_right_reverse() # need to perform reverse turn
-        elif self.curr_node == (103, 0): # bottom-right depot
+        elif self.curr_node == DEPOT_BLUE_GREEN: # bottom-right depot
             if next_node == (103, 88):
                 self.turn_left_reverse()
         
