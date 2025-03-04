@@ -2,19 +2,23 @@ from machine import I2C, Pin
 from tcs34725 import TCS34725
 from constants import *
 
+
 class ColourSensor():
     def __init__(self, sda_pin: int, scl_pin: int):
         i2c_bus = I2C(0, sda=Pin(sda_pin), scl=Pin(scl_pin))
         self.__tcs = TCS34725(i2c_bus)
     
+
     def read_rgbc(self) -> tuple[int, int, int, int]:
         return self.__tcs.read(raw=True)
+
 
     def read_temp_lux(self) -> tuple[int, int] | None:
         try:
             return self.__tcs.read(raw=False)
         except ZeroDivisionError:
             return None
+
 
     def read_colour(self) -> int | None:
         temp_lux = self.read_temp_lux()
@@ -25,6 +29,7 @@ class ColourSensor():
             return COLOUR_READINGS[temp_lux]
         else:
             return COLOUR_READINGS[min(COLOUR_READINGS, key=lambda x: ColourSensor.colour_error(temp_lux, x))]
+
 
     @staticmethod
     def colour_error(temp_lux_in, temp_lux_ref) -> int:

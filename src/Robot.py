@@ -10,9 +10,11 @@ from time import sleep, sleep_ms, ticks_ms, ticks_diff
 from  warnings import warn
 import numpy as np
 
+
 # Forward declaration of state machine
 class StateMachine:
     pass
+
 
 class Robot:
     def __init__(self, graph: dict[tuple:list[tuple]], start_node=(0,0), start_dir=0, sensor_pos = [], state_machine : StateMachine = None):

@@ -5,6 +5,7 @@ from Motor import Motor
 from time import sleep, ticks_ms
 from Robot import Robot
 
+
 class StateMachine:
     def __init__(self):
         self.robot = Robot(
@@ -18,6 +19,7 @@ class StateMachine:
         self.num_empty_parcel = 0
         self.should_end = False
 
+
     def update(self) -> None:
         self.robot.navigate(PICKUP_POINTS[self.i])
         dest_node = self.robot.pickup_parcel(next_pickup_location=PICKUP_POINTS[(self.i + 1) % 4])
@@ -30,8 +32,10 @@ class StateMachine:
                 self.should_end = True
         self.i = (self.i + 1) % 4
 
+
     def back_to_start(self) -> None:
         self.robot.navigate(START_POINT)  
+
 
     def stop(self) -> None:
         self.robot.left_motor.off()

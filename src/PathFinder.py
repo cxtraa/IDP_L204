@@ -2,10 +2,12 @@
 from constants import GRAPH
 import heapq
 
+
 class PathFinder:
     def __init__(self, graph: dict[tuple:list[tuple]]):
         self.graph = graph
     
+
     def find_shortest_path(self, node_A: tuple[int,int], node_B: tuple[int,int]) -> tuple[list[tuple[int,int]], int]:
         """
         Given nodes A, B, find the shortest path between them, using the lazy version of Dijkstra.
@@ -35,6 +37,7 @@ class PathFinder:
         
         return self.reconstruct_path(prev, node_A, node_B), best[node_B]   
 
+
     def reconstruct_path(self, prev: tuple[int,int], start: tuple[int,int], end: tuple[int,int]) -> list[tuple[int,int]]:
         """
         From prev (produced by Dijkstra) reconstruct the path.
@@ -49,9 +52,11 @@ class PathFinder:
         path.reverse()
         return path      
 
+
 def main():
     path_finder = PathFinder(graph=GRAPH)
     print(path_finder.find_shortest_path((0,-29), (-34, 32)))
+
 
 if __name__ == "__main__":
     main()
