@@ -255,9 +255,9 @@ class Robot:
         """
 
         if desired_dir == (self.dir + 1) % 4:
-            self.forward_turn_90(RIGHT) # Turn right
+            self.forward_turn_90(RIGHT, SHARP) # Turn right
         elif desired_dir == (self.dir - 1) % 4:
-            self.forward_turn_90(LEFT) # Turn left
+            self.forward_turn_90(LEFT, SHARP) # Turn left
         elif desired_dir == (self.dir + 2) % 4:
             self.turn_180(RIGHT)
         elif desired_dir == (self.dir - 2) % 4:
@@ -354,7 +354,7 @@ class Robot:
         self.deposit_parcel()
         self.left_motor.forward(ROBOT_SPEED_LINE)
         self.right_motor.forward(ROBOT_SPEED_LINE)
-        sleep(TIME_FORWARD_AT_TURN)
+        sleep(TIME_FORWARD_AT_DEPOT)
         
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.reverse(ROBOT_SPEED_TURN)
