@@ -6,11 +6,15 @@ from Button import Button
 from FlashLed import FlashLed
 from ColourSensor import ColourSensor
 from TofSensor import TofSensor
-from time import sleep
+from time import sleep, ticks_ms
 from  warnings import warn
 
+# Forward declaration of state machine
+class StateMachine:
+    pass
+
 class Robot:
-    def __init__(self, graph: dict[tuple:list[tuple]], start_node=(0,0), start_dir=0, sensor_pos = []):
+    def __init__(self, graph: dict[tuple:list[tuple]], start_node=(0,0), start_dir=0, sensor_pos = [], state_machine : StateMachine = None):
         """
         The possible robot directions are:
             - 0 North
@@ -34,6 +38,9 @@ class Robot:
         self.curr_node = start_node
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
+
+        self.state_machine = state_machine
+        self.prev_time = ticks_ms()
         
         self.control = Control(sensor_pos=sensor_pos)
     
@@ -41,7 +48,7 @@ class Robot:
         """
         Move the robot to `dest` where multiple nodes might be in between.
         """
-        shortest_path = self.path_finder.find_shortest_path(self.curr_node, dest)
+        shortest_path, _ = self.path_finder.find_shortest_path(self.curr_node, dest)
         for i in range(1, len(shortest_path)):
             self.move(shortest_path[i])
             print(self.curr_node)
@@ -266,7 +273,23 @@ class Robot:
             self.forward_turn_90(LEFT, mode) # Turn left
         elif desired_dir == (self.dir + 2) % 4:
             self.turn_180()
-    
+
+    def get_dir(self, node_A, node_B):
+        """
+        Get the required orientation for the robot to go from node_A to node_B.
+        """
+        x_1, y_1 = node_A
+        x_2, y_2 = node_B
+
+        if x_2 > x_1:
+            return 1
+        elif x_2 < x_1:
+            return 3
+        elif y_2 > y_1:
+            return 0
+        else:
+            return 2
+
     def move(self, dest : tuple[int, int]):
         """
         Move the robot from the current node to `dest`, where current node and dest are NEIGHBORS.
@@ -279,16 +302,24 @@ class Robot:
 
         turn_mode = SHARP if (dest in PICKUP_POINTS) else SMOOTH
 
-        if x_2 > x_1:
-            self.change_dir(1, turn_mode)
-        elif x_2 < x_1:
-            self.change_dir(3, turn_mode)
-        elif y_2 > y_1:
-            self.change_dir(0, turn_mode)
-        elif y_2 < y_1:
-            self.change_dir(2, turn_mode)
+        desired_dir = self.get_dir(self.curr_node, dest)
+        self.change_dir(desired_dir, turn_mode)
         
         self.forward()
+
+        # Update timings
+        curr_time = ticks_ms()
+        self.state_machine.t += curr_time - self.prev_time
+        self.prev_time = curr_time
+
+        # Compute the amount of time to return to start
+    
+    def time_to_start(self) -> None:
+        """
+        Calculate the time for the robot to return to the start.
+        """
+        _, distance = self.path_finder.find_shortest_path(self.curr_node, START_POINT)
+        return TIME_SAFETY_FACTOR * (distance * (10e-02)) / TRUE_SPEED_LINE
 
     def get_depot_to_goto(self) -> tuple[int, int] | None:
         """

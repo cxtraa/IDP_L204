@@ -6,7 +6,7 @@ class PathFinder:
     def __init__(self, graph: dict[tuple:list[tuple]]):
         self.graph = graph
     
-    def find_shortest_path(self, node_A: tuple[int,int], node_B: tuple[int,int]) -> list[tuple[int,int]]:
+    def find_shortest_path(self, node_A: tuple[int,int], node_B: tuple[int,int]) -> tuple[list[tuple[int,int]], int]:
         """
         Given nodes A, B, find the shortest path between them, using the lazy version of Dijkstra.
         """
@@ -33,7 +33,7 @@ class PathFinder:
                         heapq.heappush(pq, (new_dist, child_node))
                         prev[child_node] = curr_node
         
-        return self.reconstruct_path(prev, node_A, node_B)    
+        return self.reconstruct_path(prev, node_A, node_B), best[node_B]   
 
     def reconstruct_path(self, prev: tuple[int,int], start: tuple[int,int], end: tuple[int,int]) -> list[tuple[int,int]]:
         """
