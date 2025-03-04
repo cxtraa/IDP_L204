@@ -48,7 +48,7 @@ class Robot:
         # Update internal robot state
         c_x, c_y = self.curr_node
 
-        from_start_flag = (self.curr_node == start_point)
+        from_start_flag = (self.curr_node == START_POINT)
 
         for neighbor in self.graph[self.curr_node]:
             n_x, n_y = neighbor
@@ -60,7 +60,7 @@ class Robot:
                 self.curr_node = neighbor
                 break
         
-        to_start_flag = (self.curr_node == start_point)
+        to_start_flag = (self.curr_node == START_POINT)
 
         # Move forward for half a second so we don't detect the last junction as a new one
         self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
@@ -83,7 +83,7 @@ class Robot:
         elif to_start_flag: # Else, turn off the LED if we are going to the starting node
             self.flash_led.off()
     
-    def forward_turn_90(self, dir: int = 0) -> None:
+    def forward_turn_90(self, dir: int, mode : int = SHARP) -> None:
         """Turn the robot 90 degrees in the direction indicated by dir.
         0 - left
         1 - right"""
@@ -98,22 +98,23 @@ class Robot:
         else:
             raise(ValueError("Invalid direction: dir must be 0 (left) or 1 (right)"))
         
-        # Sharp 90 deg turn
-        self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
-        self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
-        sleep(TIME_FORWARD_AT_TURN)
-        self.left_motor.off()
-        self.right_motor.off()
-        outside_motor.forward(ROBOT_SPEED_TURN)
-        inside_motor.reverse(ROBOT_SPEED_TURN)
+        if mode == SHARP:
+            self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+            self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+            sleep(TIME_FORWARD_AT_TURN)
+            self.left_motor.off()
+            self.right_motor.off()
+            outside_motor.forward(ROBOT_SPEED_TURN)
+            inside_motor.reverse(ROBOT_SPEED_TURN)
+        elif mode == SMOOTH:
+            outside_motor.forward(OUTSIDE_MOTOR_TURN_SPEED)
+            inside_motor.forward(INSIDE_MOTOR_TURN_SPEED)
 
-        # Smooth arc
-        # outside_motor.forward(OUTSIDE_MOTOR_TURN_SPEED)
-        # inside_motor.forward(INSIDE_MOTOR_TURN_SPEED)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
             sleep(DELTA_T)
         while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
             sleep(DELTA_T)
+
         outside_motor.off()
         inside_motor.off()
         
@@ -174,7 +175,7 @@ class Robot:
         self.left_motor.off()
         self.right_motor.off()
 
-    def reverse_turn_90(self, dir: int = LEFT) -> None:
+    def reverse_turn_90(self, dir: int) -> None:
         """Turn the robot 90 degrees in the direction indicated by dir."""
         if dir == LEFT:
             outside_motor = self.right_motor
@@ -187,12 +188,9 @@ class Robot:
         else:
             raise(ValueError("Invalid direction: dir must be 0 (left) or 1 (right)"))
         
-        # Sharp 90 degree turn
         outside_motor.forward(ROBOT_SPEED_TURN)
         inside_motor.reverse(ROBOT_SPEED_TURN)
 
-        # outside_motor.reverse(OUTSIDE_MOTOR_TURN_SPEED)
-        # inside_motor.reverse(INSIDE_MOTOR_TURN_SPEED)
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
             sleep(DELTA_T)
         while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
@@ -213,13 +211,8 @@ class Robot:
             outside_motor = self.right_motor
             self.dir = (self.dir + 2) % 4
 
-        # Sharp turn
         inside_motor.reverse(ROBOT_SPEED_TURN)
         outside_motor.forward(ROBOT_SPEED_TURN)
-
-        # Arc turn
-        # inside_motor.forward(INSIDE_MOTOR_TURN_SPEED)
-        # outside_motor.forward(OUTSIDE_MOTOR_TURN_SPEED)
 
         while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
             sleep(DELTA_T)
