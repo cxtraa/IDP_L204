@@ -225,7 +225,7 @@ class Robot:
         self.change_dir(desired_dir, turn_mode)
         if dest == START_POINT:
             self.flash_led.off()
-        self.forward()
+        self.forward(to_pickup=(dest in PICKUP_POINTS))
         if self.curr_node == START_POINT:
             self.flash_led.flash()
         self.curr_node = dest
