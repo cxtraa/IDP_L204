@@ -6,7 +6,7 @@ from Button import Button
 from FlashLed import FlashLed
 from ColourSensor import ColourSensor
 from TofSensor import TofSensor
-from time import sleep, ticks_ms
+from time import sleep, sleep_ms, ticks_ms, ticks_diff
 from  warnings import warn
 
 # Forward declaration of state machine
@@ -38,9 +38,6 @@ class Robot:
         self.curr_node = start_node
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
-
-        self.state_machine = state_machine
-        self.prev_time = ticks_ms()
         
         self.control = Control(sensor_pos=sensor_pos)
     
@@ -75,11 +72,14 @@ class Robot:
         
         to_start_flag = (self.curr_node == START_POINT)
 
-        # Move forward for half a second so we don't detect the last junction as a new one
+        # Move forward until we don't detect the last junction
         self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
         self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
         while self.control.at_junction():
             sleep(DELTA_T)
+
+        if self.curr_node in PICKUP_POINTS:
+            start_pickup = ticks_ms()
 
         # While we are not at a junction, run both the left and right motor, using PID control to line follow
         while not self.control.at_junction():
@@ -90,6 +90,10 @@ class Robot:
         # The robot should be stationary after reaching the node
         self.left_motor.off()
         self.right_motor.off()
+
+        if self.curr_node in PICKUP_POINTS:
+            end_pickup = ticks_ms()
+            self.__last_time_forward_pickup = ticks_diff(end_pickup, start_pickup)
 
         if from_start_flag: # Turn on the LED if we have just left the starting node
             self.flash_led.flash()
@@ -216,12 +220,12 @@ class Robot:
         Turn 180 degrees.
         """
         if dir == LEFT:
-            inside_motor = self.right_motor
-            outside_motor = self.left_motor
+            outside_motor = self.right_motor
+            inside_motor = self.left_motor
             self.dir = (self.dir - 2) % 4
         elif dir == RIGHT:
-            inside_motor = self.left_motor
-            outside_motor = self.right_motor
+            outside_motor = self.left_motor
+            inside_motor = self.right_motor
             self.dir = (self.dir + 2) % 4
 
         inside_motor.reverse(ROBOT_SPEED_TURN)
@@ -345,7 +349,7 @@ class Robot:
         prev_node = GRAPH[self.curr_node][0]
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.reverse(ROBOT_SPEED_TURN)
-        sleep(TIME_BACKWARDS_AFTER_PARCEL)
+        sleep_ms(self.__last_time_forward_pickup)
         self.curr_node = prev_node
 
         # Find the next node on our path to the destination node to deliver the parcel
