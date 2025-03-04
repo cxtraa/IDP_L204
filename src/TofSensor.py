@@ -1,5 +1,6 @@
 from machine import I2C, Pin
 from vl53l0x import VL53L0X
+from constants import *
 
 class TofSensor():
     def __init__(self, sda_pin: int, scl_pin: int):
@@ -11,4 +12,4 @@ class TofSensor():
 
     def read_distance(self) -> int:
         # Returns distance read by TOF sensor in mm
-        return self.__vl.ping() - 45
+        return self.__vl.ping() - TOF_SENSOR_OFFSET
