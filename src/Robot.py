@@ -3,6 +3,7 @@ from PathFinder import PathFinder
 from Control import Control
 from Motor import Motor
 from Button import Button
+from FlashLed import FlashLed
 from time import sleep
 from  warnings import warn
 
@@ -17,6 +18,7 @@ class Robot:
         """
         self.left_motor = Motor(LEFT_MOTOR_NUM)
         self.right_motor = Motor(RIGHT_MOTOR_NUM)
+        self.flash_led = FlashLed(FLASH_LED_PIN)
         self.start_button = Button(12)
         self.dir = start_dir
         self.curr_node = start_node
@@ -41,6 +43,9 @@ class Robot:
 
         # Update internal robot state
         c_x, c_y = self.curr_node
+
+        from_start_flag = (self.curr_node == start_point)
+
         for neighbor in self.graph[self.curr_node]:
             n_x, n_y = neighbor
             cond1 = self.dir == 0 and n_y > c_y
@@ -50,6 +55,8 @@ class Robot:
             if cond1 or cond2 or cond3 or cond4:
                 self.curr_node = neighbor
                 break
+        
+        to_start_flag = (self.curr_node == start_point)
 
         # Move forward for half a second so we don't detect the last junction as a new one
         self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
@@ -66,6 +73,11 @@ class Robot:
         # The robot should be stationary after reaching the node
         self.left_motor.off()
         self.right_motor.off()
+
+        if from_start_flag: # Turn on the LED if we have just left the starting node
+            self.flash_led.flash()
+        elif to_start_flag: # Else, turn off the LED if we are going to the starting node
+            self.flash_led.off()
     
     def forward_turn_90(self, dir: int = 0) -> None:
         """Turn the robot 90 degrees in the direction indicated by dir.
