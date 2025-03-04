@@ -104,11 +104,9 @@ class Robot:
         if dir == LEFT:
             outside_motor = self.right_motor
             inside_motor = self.left_motor
-            self.dir = (self.dir - 1) % 4
         elif dir == RIGHT:
             outside_motor = self.left_motor
             inside_motor = self.right_motor
-            self.dir = (self.dir + 1) % 4
         else:
             raise(ValueError("Invalid direction: dir must be 0 (left) or 1 (right)"))
         
@@ -190,6 +188,8 @@ class Robot:
             self.forward_turn_90(LEFT, mode) # Turn left
         elif desired_dir == (self.dir + 2) % 4:
             self.turn_180()
+
+        self.dir = desired_dir
 
 
     def get_dir(self, node_A, node_B):
