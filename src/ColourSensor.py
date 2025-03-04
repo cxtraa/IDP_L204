@@ -10,11 +10,17 @@ class ColourSensor():
     def read_rgbc(self) -> tuple[int, int, int, int]:
         return self.__tcs.read(raw=True)
 
-    def read_temp_lux(self) -> tuple[int, int]:
-        return self.__tcs.read(raw=False)
+    def read_temp_lux(self) -> tuple[int, int] | None:
+        try:
+            return self.__tcs.read(raw=False)
+        except ZeroDivisionError:
+            return None
 
-    def read_colour(self) -> int:
+    def read_colour(self) -> int | None:
         temp_lux = self.read_temp_lux()
+        if temp_lux is None:
+            return None
+        
         if temp_lux in COLOUR_READINGS:
             return COLOUR_READINGS[temp_lux]
         else:

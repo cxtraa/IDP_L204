@@ -4,6 +4,8 @@ from Control import Control
 from Motor import Motor
 from Button import Button
 from FlashLed import FlashLed
+from ColourSensor import ColourSensor
+from TofSensor import TofSensor
 from time import sleep
 from  warnings import warn
 
@@ -19,7 +21,9 @@ class Robot:
         self.left_motor = Motor(LEFT_MOTOR_NUM)
         self.right_motor = Motor(RIGHT_MOTOR_NUM)
         self.flash_led = FlashLed(FLASH_LED_PIN)
-        self.start_button = Button(12)
+        self.colour_sensor = ColourSensor(COLOUR_SENSOR_SDA_PIN, COLOUR_SENSOR_SCL_PIN)
+        self.tof_sensor = TofSensor(TOF_SENSOR_SDA_PIN, TOF_SENSOR_SCL_PIN)
+        self.start_button = Button(START_BUTTON_PIN)
         self.dir = start_dir
         self.curr_node = start_node
         self.graph = graph
