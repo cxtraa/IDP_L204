@@ -21,8 +21,14 @@ class Robot:
         self.left_motor = Motor(LEFT_MOTOR_NUM)
         self.right_motor = Motor(RIGHT_MOTOR_NUM)
         self.flash_led = FlashLed(FLASH_LED_PIN)
-        self.colour_sensor = ColourSensor(COLOUR_SENSOR_SDA_PIN, COLOUR_SENSOR_SCL_PIN)
-        self.tof_sensor = TofSensor(TOF_SENSOR_SDA_PIN, TOF_SENSOR_SCL_PIN)
+        try:
+            self.colour_sensor = ColourSensor(COLOUR_SENSOR_SDA_PIN, COLOUR_SENSOR_SCL_PIN)
+        except OSError:
+            self.colour_sensor = None
+        try:
+            self.tof_sensor = TofSensor(TOF_SENSOR_SDA_PIN, TOF_SENSOR_SCL_PIN)
+        except OSError:
+            self.tof_sensor = None
         self.start_button = Button(START_BUTTON_PIN)
         self.dir = start_dir
         self.curr_node = start_node
@@ -83,7 +89,7 @@ class Robot:
         elif to_start_flag: # Else, turn off the LED if we are going to the starting node
             self.flash_led.off()
     
-    def forward_turn_90(self, dir: int, mode : int = SHARP) -> None:
+    def forward_turn_90(self, dir: int, mode : int = SMOOTH) -> None:
         """Turn the robot 90 degrees in the direction indicated by dir.
         0 - left
         1 - right"""
@@ -249,19 +255,17 @@ class Robot:
         self.left_motor.off()
         self.right_motor.off()
 
-    def change_dir(self, desired_dir : int):
+    def change_dir(self, desired_dir : int, mode : int = SMOOTH) -> None:
         """
-        Decide whether to call turn_left() or turn_right()
+        Decide whether to call turn_left(), turn_right() or turn_180()
         """
 
         if desired_dir == (self.dir + 1) % 4:
-            self.forward_turn_90(RIGHT) # Turn right
+            self.forward_turn_90(RIGHT, mode) # Turn right
         elif desired_dir == (self.dir - 1) % 4:
-            self.forward_turn_90(LEFT) # Turn left
+            self.forward_turn_90(LEFT, mode) # Turn left
         elif desired_dir == (self.dir + 2) % 4:
-            self.turn_180(RIGHT)
-        elif desired_dir == (self.dir - 2) % 4:
-            self.turn_180(LEFT)
+            self.turn_180()
     
     def move(self, dest : tuple[int, int]):
         """
@@ -273,14 +277,16 @@ class Robot:
         x_1, y_1 = self.curr_node
         x_2, y_2 = dest
 
+        turn_mode = SHARP if (dest in PICKUP_POINTS) else SMOOTH
+
         if x_2 > x_1:
-            self.change_dir(1)
+            self.change_dir(1, turn_mode)
         elif x_2 < x_1:
-            self.change_dir(3)
+            self.change_dir(3, turn_mode)
         elif y_2 > y_1:
-            self.change_dir(0)
+            self.change_dir(0, turn_mode)
         elif y_2 < y_1:
-            self.change_dir(2)
+            self.change_dir(2, turn_mode)
         
         self.forward()
 
