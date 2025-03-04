@@ -1,13 +1,16 @@
 from constants import *
+
 from PathFinder import PathFinder
 from Control import Control
+
 from Motor import Motor
-from Button import Button
-from FlashLed import FlashLed
+from Servo import Servo
 from ColourSensor import ColourSensor
 from TofSensor import TofSensor
+from Button import Button
+from FlashLed import FlashLed
+
 from time import sleep, sleep_ms, ticks_ms, ticks_diff
-from  warnings import warn
 import numpy as np
 
 
@@ -27,6 +30,9 @@ class Robot:
         """
         self.left_motor = Motor(LEFT_MOTOR_NUM)
         self.right_motor = Motor(RIGHT_MOTOR_NUM)
+        self.servo = Servo(SERVO_NUM)
+        self.servo.set_angle(0)
+
         self.flash_led = FlashLed(FLASH_LED_PIN)
         try:
             self.colour_sensor = ColourSensor(COLOUR_SENSOR_SDA_PIN, COLOUR_SENSOR_SCL_PIN)
@@ -246,10 +252,17 @@ class Robot:
         can return:
         DEPOT_RED_YELLOW, DEPOT_BLUE_GREEN, None
         """
-        return DEPOT_RED_YELLOW
+        parcel_colour = self.colour_sensor.read_colour()
+
+        if parcel_colour in [RED, YELLOW]:
+            return DEPOT_RED_YELLOW
+        elif parcel_colour in [BLUE, GREEN]:
+            return DEPOT_BLUE_GREEN
+        else:
+            return None
 
 
-    def pickup_parcel(self, next_pickup_location : tuple[int, int]) -> tuple[int, int] | None:
+    def pickup_parcel(self, next_pickup_location : tuple[int, int]) -> tuple[int, int]:
         """
         Robot procedure for picking up a parcel. Returns the destination depot, or None if there is no parcel.
         0 - no parcel found
@@ -257,11 +270,14 @@ class Robot:
         2 - blue/green
         """
 
-        # TODO Add code to lift up parcel
+        # TODO: Use TOF sensor to detect parcel and make sure we are close enough to pick it up
         
         dest_node = self.get_depot_to_goto()
-        if not dest_node:
+        if dest_node is None: # No parcel found
             dest_node = next_pickup_location
+        else:
+            self.servo.set_angle(30)
+            sleep(0.5)
 
         # We are at a pickup point, find the node before us (there is only 1) and move to it
         prev_node = GRAPH[self.curr_node][0]
@@ -334,8 +350,8 @@ class Robot:
         """
         Robot procedure for depositing a parcel.
         """
-        # warn("Not implemented: deposit_parcel() is a placeholder function.", Warning)
-        pass
+        self.servo.set_angle(0)
+        sleep(0.5)
 
 
     def __str__(self) -> str:
