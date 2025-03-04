@@ -360,7 +360,7 @@ class Robot:
         self.deposit_parcel()
         self.left_motor.forward(ROBOT_SPEED_LINE)
         self.right_motor.forward(ROBOT_SPEED_LINE)
-        sleep(TIME_FORWARD_AT_TURN)
+        sleep(TIME_FORWARD_AT_DEPOT)
         
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.reverse(ROBOT_SPEED_TURN)

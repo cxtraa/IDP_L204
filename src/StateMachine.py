@@ -10,7 +10,7 @@ class StateMachine:
     def __init__(self):
         self.robot = Robot(
             graph=GRAPH,
-            start_node=(0, -29),
+            start_node=START_POINT,
             start_dir=0,
             sensor_pos=SENSOR_POS
         )
@@ -31,7 +31,7 @@ class StateMachine:
         self.i = (self.i + 1) % 4
 
     def back_to_start(self) -> None:
-        self.robot.navigate((0, -29))  
+        self.robot.navigate(START_POINT)  
 
     def stop(self) -> None:
         self.robot.left_motor.off()
