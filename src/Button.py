@@ -1,5 +1,5 @@
 from machine import Pin
-from time import ticks_ms
+from time import ticks_ms, ticks_diff
 from constants import BUTTON_DEBOUNCE_TIME
 
 
@@ -15,8 +15,9 @@ class Button:
 
 
     def __update(self) -> None:
-        if ticks_ms() - self.last_debounce_time > BUTTON_DEBOUNCE_TIME:
+        if ticks_diff(ticks_ms(), self.last_debounce_time) > BUTTON_DEBOUNCE_TIME:
             self.state = self.__read()
+        self.last_debounce_time = ticks_ms()
     
 
     def pressed(self) -> bool:
