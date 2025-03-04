@@ -78,16 +78,17 @@ SMOOTH = 1 # Smoother turn in arc
 BUTTON_DEBOUNCE_TIME = 0.01
 
 # Various sensor data
-COLOUR_READINGS = {
-    (2783.53, -1.05657): 0, # Red
-    (8890.354, 0.5218): 1, # Yellow
-    (1672.447, -0.73191): 2, # Green
-    (4518.424, 0.11455): 3 # Blue
-}
 RED = 0
 YELLOW = 1
 GREEN = 2
 BLUE = 3
+
+COLOUR_READINGS = {
+    (2783.53, -1.05657): RED, # Red
+    (8890.354, 0.5218): YELLOW, # Yellow
+    (1672.447, -0.73191): GREEN, # Green
+    (4518.424, 0.11455): BLUE # Blue
+}
 
 SENSOR_POS = [-5.25, -0.75, 0.75, 5.25]
 TOF_SENSOR_OFFSET = 55
