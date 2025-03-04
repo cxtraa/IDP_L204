@@ -6,7 +6,7 @@ from constants import BUTTON_DEBOUNCE_TIME
 class Button:
     def __init__(self, pin_number : int):
         self.__pin_in = Pin(pin_number, Pin.IN)
-        self.last_debounce_time = 0.0
+        self.last_debounce_time = ticks_ms()
         self.state = 0 # low
 
 
