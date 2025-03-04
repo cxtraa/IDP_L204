@@ -35,7 +35,8 @@ class Robot:
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
 
-        self.__last_time_forward_pickup = 0
+        self.__last_time_slow_pickup = 0
+        self.__last_time_fast_pickup = 0
         
         self.control = Control(sensor_pos=sensor_pos)
     
@@ -70,6 +71,9 @@ class Robot:
         
         to_start_flag = (self.curr_node == START_POINT)
 
+        if self.curr_node in PICKUP_POINTS:
+            start_slow_pickup = ticks_ms()
+
         # Move forward until we don't detect the last junction
         self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
         self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
@@ -77,7 +81,9 @@ class Robot:
             sleep(DELTA_T)
 
         if self.curr_node in PICKUP_POINTS:
-            start_pickup = ticks_ms()
+            end_slow_pickup = ticks_ms()
+            self.__last_time_slow_pickup = ticks_diff(end_slow_pickup, start_slow_pickup)
+            start_fast_pickup = ticks_ms()
 
         # While we are not at a junction, run both the left and right motor, using PID control to line follow
         while not self.control.at_junction():
@@ -90,8 +96,8 @@ class Robot:
         self.right_motor.off()
 
         if self.curr_node in PICKUP_POINTS:
-            end_pickup = ticks_ms()
-            self.__last_time_forward_pickup = ticks_diff(end_pickup, start_pickup)
+            end_fast_pickup = ticks_ms()
+            self.__last_time_fast_pickup = ticks_diff(end_fast_pickup, start_fast_pickup)
 
         if from_start_flag: # Turn on the LED if we have just left the starting node
             self.flash_led.flash()
@@ -323,7 +329,10 @@ class Robot:
         prev_node = GRAPH[self.curr_node][0]
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.reverse(ROBOT_SPEED_TURN)
-        sleep_ms(self.__last_time_forward_pickup)
+        sleep_ms(self.__last_time_fast_pickup)
+        self.left_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
+        self.right_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
+        sleep_ms(self.__last_time_slow_pickup)
         self.curr_node = prev_node
 
         # Find the next node on our path to the destination node to deliver the parcel
