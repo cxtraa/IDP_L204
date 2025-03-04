@@ -343,28 +343,27 @@ class Robot:
         if reverse_left:
             self.reverse_turn_90(LEFT)
         elif reverse_right:
-            self.reverse_turn_90(RIGHT) # Reverse turn right
+            self.reverse_turn_90(RIGHT)
 
-    def depot_procedure(self) -> None:
+    def depot_procedure(self, depot : int) -> None:
 
         self.deposit_parcel()
         self.left_motor.forward(ROBOT_SPEED_LINE)
         self.right_motor.forward(ROBOT_SPEED_LINE)
         sleep(TIME_FORWARD_AT_TURN)
         
-        # Manual movement control in case change_dir doesn't work
-        # self.left_motor.reverse(ROBOT_SPEED_TURN)
-        # self.right_motor.reverse(ROBOT_SPEED_TURN)
-        # while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
-        #     sleep(DELTA_T)
-        # self.left_motor.off()
-        # self.right_motor.off()
+        self.left_motor.reverse(ROBOT_SPEED_TURN)
+        self.right_motor.reverse(ROBOT_SPEED_TURN)
+        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+            sleep(DELTA_T)
+        self.left_motor.off()
+        self.right_motor.off()
 
-        # if depot == DEPOT_RED_YELLOW:
-        #     self.turn_180(LEFT)
-        # elif depot == DEPOT_BLUE_GREEN:
-        #     self.turn_180(RIGHT)
-        # self.forward()
+        if depot == DEPOT_RED_YELLOW:
+            self.turn_180(LEFT)
+        elif depot == DEPOT_BLUE_GREEN:
+            self.turn_180(RIGHT)
+        self.forward()
     
     def deposit_parcel(self):
         """
