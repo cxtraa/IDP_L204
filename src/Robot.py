@@ -136,11 +136,9 @@ class Robot:
         if dir == LEFT:
             outside_motor = self.right_motor
             inside_motor = self.left_motor
-            self.dir = (self.dir - 1) % 4
         elif dir == RIGHT:
             outside_motor = self.left_motor
             inside_motor = self.right_motor
-            self.dir = (self.dir + 1) % 4
         else:
             raise(ValueError("Invalid direction: dir must be 0 (left) or 1 (right)"))
         
@@ -322,8 +320,10 @@ class Robot:
 
         if result < 0:
             self.reverse_turn_90(RIGHT)
+            self.dir = (self.dir + 1) % 4
         elif result > 0:
             self.reverse_turn_90(LEFT)
+            self.dir = (self.dir - 1) % 4
 
 
     def depot_procedure(self, depot : int) -> None:
