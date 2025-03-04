@@ -218,12 +218,12 @@ class Robot:
         Turn 180 degrees.
         """
         if dir == LEFT:
-            inside_motor = self.right_motor
-            outside_motor = self.left_motor
+            outside_motor = self.right_motor
+            inside_motor = self.left_motor
             self.dir = (self.dir - 2) % 4
         elif dir == RIGHT:
-            inside_motor = self.left_motor
-            outside_motor = self.right_motor
+            outside_motor = self.left_motor
+            inside_motor = self.right_motor
             self.dir = (self.dir + 2) % 4
 
         inside_motor.reverse(ROBOT_SPEED_TURN)
