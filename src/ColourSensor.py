@@ -24,7 +24,7 @@ class ColourSensor():
         if temp_lux in COLOUR_READINGS:
             return COLOUR_READINGS[temp_lux]
         else:
-            return min(COLOUR_READINGS, key=lambda x: ColourSensor.colour_error(temp_lux, x))
+            return COLOUR_READINGS[min(COLOUR_READINGS, key=lambda x: ColourSensor.colour_error(temp_lux, x))]
 
     @staticmethod
     def colour_error(temp_lux_in, temp_lux_ref) -> int:
