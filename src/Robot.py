@@ -10,8 +10,7 @@ from TofSensor import TofSensor
 from Button import Button
 from FlashLed import FlashLed
 
-from time import sleep, sleep_ms, ticks_ms, ticks_diff
-
+from time import sleep, ticks_ms, ticks_diff
 
 class Robot:
     def __init__(self, graph: dict[tuple:list[tuple]], sensor_pos, start_node=(0,-29), start_dir=0):
@@ -47,6 +46,8 @@ class Robot:
         self.total_line_distance = 0
         self.total_line_time = 0
 
+        self.turn_time = None
+
         self.control = Control(sensor_pos=sensor_pos)
 
 
@@ -76,6 +77,7 @@ class Robot:
 
         if to_pickup:
             self.reverse_time_for_pickup = ticks_diff(pickup_end_time, pickup_start_time)
+            self.reverse_time_for_pickup = (pickup_end_time - pickup_start_time) / 1e03
         
         # The robot should be stationary after reaching the node
         self.left_motor.off()
@@ -86,6 +88,9 @@ class Robot:
         """Turn the robot 90 degrees in the direction indicated by dir.
         0 - left
         1 - right"""
+
+        if not self.turn_time:
+            turn_start_time = ticks_ms()
         if direction == LEFT:
             outside_motor = self.right_motor
             inside_motor = self.left_motor
@@ -116,6 +121,9 @@ class Robot:
         outside_motor.off()
         inside_motor.off()
 
+        if not self.turn_time:
+            turn_end_time = ticks_ms()
+            self.turn_time = ticks_diff(turn_end_time, turn_start_time) / 1e03
 
     def turn_180(self, direction : int = LEFT) -> None:
         """
@@ -139,7 +147,6 @@ class Robot:
         while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
             sleep(DELTA_T)
     
-
     def change_dir(self, desired_dir : int, mode : int = SMOOTH) -> None:
         """
         Decide whether to call turn_left(), turn_right() or turn_180()
@@ -193,8 +200,8 @@ class Robot:
 
         line_start_time = ticks_ms()
         self.forward(to_pickup=(dest in PICKUP_POINTS))
-        self.total_line_time += ticks_ms() - line_start_time
-        self.total_line_distance += abs(x_2 - x_1) + abs(y_2 - y_1)
+        self.total_line_time += (ticks_ms() - line_start_time) / 10e03
+        self.total_line_distance += (abs(x_2 - x_1) + abs(y_2 - y_1)) / 10e02
 
         # Update current node
         self.curr_node = dest
@@ -208,10 +215,17 @@ class Robot:
         """
         Calculate the time for the robot to reach the node `dest`.
         """
-        _, distance = self.path_finder.find_shortest_path(self.curr_node, dest)
+        path, distance = self.path_finder.find_shortest_path(self.curr_node, dest)
         line_speed = self.total_line_distance / self.total_line_time
-        return TIME_SAFETY_FACTOR * (distance * 10e-02) / line_speed
+        curr_dir = self.dir
+        num_turns = 0
 
+        # Find the number of turns made
+        for i in range(1, len(path)):
+            if self.get_dir(path[i-1], path[i]) != curr_dir:
+                num_turns += 1
+
+        return TIME_SAFETY_FACTOR * ((num_turns * self.turn_time) + (distance * (10e-02)) / line_speed)
 
     def get_depot_to_goto(self) -> tuple[int, int] | None:
         """
@@ -227,7 +241,6 @@ class Robot:
             return DEPOT_BLUE_GREEN
         else:
             return None
-
 
     def pickup_parcel(self, next_pickup_location : tuple[int, int]) -> tuple[int, int]:
         """
@@ -249,7 +262,7 @@ class Robot:
         # Wait until the ToF sensor detects a parcel within pickup range.
         dest_node = DEPOT_BLUE_GREEN
         if (self.tof_sensor is not None) and (self.colour_sensor is not None):
-            while self.tof_sensor.read_distance() > PARCEL_DETECTION_THRESHOLD:
+            while (self.tof_sensor.read_distance() > PARCEL_DETECTION_THRESHOLD) and (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
                 self.left_motor.forward(ROBOT_SPEED_APPROACHING_PARCEL+ self.control.get_pid_error())
                 self.right_motor.forward(ROBOT_SPEED_APPROACHING_PARCEL- self.control.get_pid_error())# Slow approach speed while following the line
                 sleep(0.1)  # Allow time for sensor to update
@@ -257,6 +270,12 @@ class Robot:
         
         self.left_motor.off()
         self.right_motor.off()
+
+        # Move backward until we detect the last junction
+        self.left_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
+        self.right_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
+        while not self.control.at_junction():
+            sleep(DELTA_T)
 
         
         if dest_node is None: # No parcel found
@@ -269,7 +288,7 @@ class Robot:
         prev_node = GRAPH[self.curr_node][0]
         self.left_motor.reverse(ROBOT_SPEED_LINE)
         self.right_motor.reverse(ROBOT_SPEED_LINE)
-        sleep_ms(self.reverse_time_for_pickup)
+        sleep(self.reverse_time_for_pickup)
         self.curr_node = prev_node
 
         # Find the next node on our path to the destination node to deliver the parcel
