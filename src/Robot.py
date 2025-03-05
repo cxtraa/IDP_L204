@@ -11,7 +11,6 @@ from Button import Button
 from FlashLed import FlashLed
 
 from time import sleep, sleep_ms, ticks_ms, ticks_diff
-import numpy as np
 
 
 # Forward declaration of state machine
@@ -322,26 +321,15 @@ class Robot:
         Turn in the appropriate direction after collecting the parcel.
         """
 
-        x1, y1 = self.curr_node
-        x2, y2 = node
-
         # Decide whether to reverse left or reverse right
-        direction_matrix = np.array([
-            [0, 1, 0],  # North
-            [1, 0, 0],   # East
-            [0, -1, 0],   # South
-            [-1, 0, 0]   # West
-        ])
+        current_dir = self.dir
+        target_dir = self.get_dir(self.curr_node, node)
+        result = (target_dir - current_dir) % 4
 
-        current_dir = direction_matrix[self.dir]
-        target_dir = np.array([x2 - x1, y2 - y1, 0])
-
-        result = np.cross(current_dir, target_dir)[2]
-
-        if result < 0:
+        if result == 1:
             self.reverse_turn_90(RIGHT)
             self.dir = (self.dir + 1) % 4
-        elif result > 0:
+        elif result == 3:
             self.reverse_turn_90(LEFT)
             self.dir = (self.dir - 1) % 4
 
