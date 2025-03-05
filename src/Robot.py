@@ -51,7 +51,7 @@ class Robot:
         self.prev_time = ticks_ms()
 
         self.__last_time_slow_pickup = 0
-        self.__last_time_fast_pickup = 0
+        self.__last_time_fast_pickup = 0 # TODO FIX THIS
         
         self.control = Control(sensor_pos=sensor_pos)
 
@@ -162,7 +162,6 @@ class Robot:
         if dir == LEFT:
             outside_motor = self.right_motor
             inside_motor = self.left_motor
-            self.dir = (self.dir - 2) % 4
         elif dir == RIGHT:
             outside_motor = self.left_motor
             inside_motor = self.right_motor
@@ -344,14 +343,15 @@ class Robot:
 
 
     def depot_procedure(self, depot : int) -> None:
-        self.deposit_parcel()
         self.left_motor.forward(ROBOT_SPEED_LINE)
         self.right_motor.forward(ROBOT_SPEED_LINE)
         sleep(TIME_FORWARD_AT_DEPOT)
+
+        self.deposit_parcel()
         
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.reverse(ROBOT_SPEED_TURN)
-        while self.control.get_ir_readings()[1] or self.control.get_ir_readings()[2]:
+        while self.control.get_ir_readings()[0] or self.control.get_ir_readings()[3]:
             sleep(DELTA_T)
         self.left_motor.off()
         self.right_motor.off()
@@ -360,7 +360,9 @@ class Robot:
             self.turn_180(LEFT)
         elif depot == DEPOT_BLUE_GREEN:
             self.turn_180(RIGHT)
+        self.dir = (self.dir + 2) % 4
         self.forward()
+        self.curr_node = GRAPH[depot][0]
 
 
     def deposit_parcel(self):
