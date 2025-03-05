@@ -12,14 +12,8 @@ from FlashLed import FlashLed
 
 from time import sleep, sleep_ms, ticks_ms, ticks_diff
 
-
-# Forward declaration of state machine
-class StateMachine:
-    pass
-
-
 class Robot:
-    def __init__(self, graph: dict[tuple:list[tuple]], start_node=(0,0), start_dir=0, sensor_pos = [], state_machine : StateMachine = None):
+    def __init__(self, graph: dict[tuple:list[tuple]], start_node=(0,-29), start_dir=0, sensor_pos = []):
         """
         The possible robot directions are:
             - 0 North
@@ -47,13 +41,12 @@ class Robot:
 
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
-        self.state_machine = state_machine
-        self.prev_time = ticks_ms()
 
         self.reverse_time_for_pickup = None
-        
-        self.control = Control(sensor_pos=sensor_pos)
+        self.total_line_distance = 0
+        self.total_line_time = 0
 
+        self.control = Control(sensor_pos=sensor_pos)
 
     def navigate(self, dest : tuple[int, int]) -> None:
         """
@@ -62,8 +55,6 @@ class Robot:
         shortest_path, _ = self.path_finder.find_shortest_path(self.curr_node, dest)
         for i in range(1, len(shortest_path)):
             self.move(shortest_path[i])
-            print(self.curr_node)
-
 
     def forward(self, to_pickup: bool = False) -> None:
         """
@@ -72,12 +63,6 @@ class Robot:
 
         if to_pickup:
             pickup_start_time = ticks_ms()
-
-        # Move forward until we don't detect the last junction
-        # self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
-        # self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
-        # while self.control.at_junction():
-        #     sleep(DELTA_T)
 
         # While we are not at a junction, run both the left and right motor, using PID control to line follow
         while not self.control.at_junction():
@@ -219,7 +204,11 @@ class Robot:
         # Start flasing led when leaving the start point
         if self.curr_node == START_POINT:
             self.flash_led.flash()
+
+        line_start_time = ticks_ms()
         self.forward(to_pickup=(dest in PICKUP_POINTS))
+        self.total_line_time += ticks_ms() - line_start_time
+        self.total_line_distance += abs(x_2 - x_1) + abs(y_2 - y_1)
 
         # Update current node
         self.curr_node = dest
@@ -227,20 +216,14 @@ class Robot:
         # Turn LED OFF if returning to the start
         if self.curr_node == START_POINT:
             self.flash_led.off()
-
-        # Update timings
-        curr_time = ticks_ms()
-        self.state_machine.t += ticks_diff(curr_time, self.prev_time)
-        self.prev_time = curr_time
-
-        # Compute the amount of time to return to start
     
-    def time_to_start(self) -> None:
+    def time_for_path(self, dest : tuple[int, int]) -> None:
         """
-        Calculate the time for the robot to return to the start.
+        Calculate the time for the robot to reach the node `dest`.
         """
-        _, distance = self.path_finder.find_shortest_path(self.curr_node, START_POINT)
-        return TIME_SAFETY_FACTOR * (distance * (10e-02)) / TRUE_SPEED_LINE
+        _, distance = self.path_finder.find_shortest_path(self.curr_node, dest)
+        line_speed = self.total_line_distance / self.total_line_time
+        return TIME_SAFETY_FACTOR * (distance * (10e-02)) / line_speed
 
     def get_depot_to_goto(self) -> tuple[int, int] | None:
         """
@@ -306,7 +289,6 @@ class Robot:
 
         return dest_node
     
-
     def pickup_turn(self, node : tuple[int, int]):
         """
         Turn in the appropriate direction after collecting the parcel.
@@ -323,7 +305,6 @@ class Robot:
         elif result == 3:
             self.reverse_turn_90(LEFT)
             self.dir = (self.dir - 1) % 4
-
 
     def depot_procedure(self, depot : int) -> None:
         self.deposit_parcel()
@@ -345,14 +326,12 @@ class Robot:
             self.turn_180(RIGHT)
         self.forward()
 
-
     def deposit_parcel(self):
         """
         Robot procedure for depositing a parcel.
         """
         self.servo.set_angle(0)
         sleep(0.5)
-
 
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]
