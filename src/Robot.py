@@ -48,8 +48,7 @@ class Robot:
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
 
-        self.__last_time_slow_pickup = 0
-        self.__last_time_fast_pickup = 0
+        self.reverse_time_for_pickup = None
         
         self.control = Control(sensor_pos=sensor_pos)
 
@@ -70,32 +69,27 @@ class Robot:
         """
 
         if to_pickup:
-            start_slow_pickup = ticks_ms()
+            pickup_start_time = ticks_ms()
 
         # Move forward until we don't detect the last junction
-        self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
-        self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
-        while self.control.at_junction():
-            sleep(DELTA_T)
-
-        if to_pickup:
-            end_slow_pickup = start_fast_pickup = ticks_ms()
-            self.__last_time_slow_pickup = ticks_diff(end_slow_pickup, start_slow_pickup)
+        # self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+        # self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+        # while self.control.at_junction():
+        #     sleep(DELTA_T)
 
         # While we are not at a junction, run both the left and right motor, using PID control to line follow
         while not self.control.at_junction():
             self.left_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
             self.right_motor.forward(ROBOT_SPEED_LINE - self.control.get_pid_error())
             sleep(DELTA_T)
+
+        if to_pickup:
+            pickup_end_time = ticks_ms()
+            self.reverse_time_for_pickup = (pickup_end_time - pickup_start_time)
         
         # The robot should be stationary after reaching the node
         self.left_motor.off()
         self.right_motor.off()
-
-        if to_pickup:
-            end_fast_pickup = ticks_ms()
-            self.__last_time_fast_pickup = ticks_diff(end_fast_pickup, start_fast_pickup)
-    
 
     def forward_turn_90(self, dir: int, mode : int = SMOOTH) -> None:
         """Turn the robot 90 degrees in the direction indicated by dir.
@@ -206,7 +200,6 @@ class Robot:
         else:
             return 2
 
-
     def move(self, dest : tuple[int, int]):
         """
         Move the robot from the current node to `dest`, where current node and dest are NEIGHBORS.
@@ -240,14 +233,12 @@ class Robot:
 
         # Compute the amount of time to return to start
     
-
     def time_to_start(self) -> None:
         """
         Calculate the time for the robot to return to the start.
         """
         _, distance = self.path_finder.find_shortest_path(self.curr_node, START_POINT)
         return TIME_SAFETY_FACTOR * (distance * (10e-02)) / TRUE_SPEED_LINE
-
 
     def get_depot_to_goto(self) -> tuple[int, int] | None:
         """
@@ -299,12 +290,9 @@ class Robot:
 
         # We are at a pickup point, find the node before us (there is only 1) and move to it
         prev_node = GRAPH[self.curr_node][0]
-        self.left_motor.reverse(ROBOT_SPEED_TURN)
-        self.right_motor.reverse(ROBOT_SPEED_TURN)
-        sleep_ms(self.__last_time_fast_pickup)
-        self.left_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
-        self.right_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
-        sleep_ms(self.__last_time_slow_pickup)
+        self.left_motor.reverse(ROBOT_SPEED_LINE)
+        self.right_motor.reverse(ROBOT_SPEED_LINE)
+        sleep_ms(self.reverse_time_for_pickup)
         self.curr_node = prev_node
 
         # Find the next node on our path to the destination node to deliver the parcel
@@ -348,6 +336,7 @@ class Robot:
 
     def depot_procedure(self, depot : int) -> None:
         self.deposit_parcel()
+
         self.left_motor.forward(ROBOT_SPEED_LINE)
         self.right_motor.forward(ROBOT_SPEED_LINE)
         sleep(TIME_FORWARD_AT_DEPOT)
