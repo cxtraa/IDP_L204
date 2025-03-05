@@ -221,12 +221,17 @@ class Robot:
 
         desired_dir = self.get_dir(self.curr_node, dest)
         self.change_dir(desired_dir, turn_mode)
-        if dest == START_POINT:
-            self.flash_led.off()
-        self.forward(to_pickup=(dest in PICKUP_POINTS))
+        # Start flasing led when leaving the start point
         if self.curr_node == START_POINT:
             self.flash_led.flash()
+        self.forward(to_pickup=(dest in PICKUP_POINTS))
+
+        # Update current node
         self.curr_node = dest
+
+        # Turn LED OFF if returning to the start
+        if self.curr_node == START_POINT:
+            self.flash_led.off()
 
         # Update timings
         curr_time = ticks_ms()
