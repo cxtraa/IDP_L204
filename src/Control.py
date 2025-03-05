@@ -4,6 +4,7 @@ from constants import *
 
 from math import copysign
 
+
 class Control:
     def __init__(self, sensor_pos: list[float]):
         # Tracker sensors should be ordered from left to right
@@ -18,8 +19,10 @@ class Control:
         self.__last_error = self.get_line_pos() if self.get_line_pos() is not None else 0.0
         self.__integral_error = 0
     
+
     def get_ir_readings(self) -> list[int]:
         return [ts.read() for ts in self.__tracker_sensors]
+
 
     def get_line_pos(self) -> float | None:
         """
@@ -36,6 +39,7 @@ class Control:
             pos = sum([self.__sensor_pos[i] * readings[i] for i in range(self.__sensor_count)]) / sum_of_readings
             return pos
         return None
+
 
     def get_pid_error(self) -> float:
         """
@@ -54,6 +58,7 @@ class Control:
         pid_error = abs_error * K_P + derivative_error * K_D + self.__integral_error * K_I
         return pid_error
     
+
     def at_junction(self) -> bool:
         """
         Return true if the robot is currently at a junction, and false otherwise.
@@ -63,6 +68,7 @@ class Control:
         readings = self.get_ir_readings()
         return (readings[0] == 1 or readings[3] == 1) and (readings.count(True) >= 2)
         
+
     def reset(self):
         self.__last_error = self.get_line_pos()
         self.__integral_error = 0
