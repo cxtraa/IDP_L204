@@ -1,8 +1,4 @@
 from constants import *
-from PathFinder import PathFinder
-from Control import Control
-from Motor import Motor
-from time import sleep, ticks_ms
 from Robot import Robot
 
 
@@ -10,10 +6,9 @@ class StateMachine:
     def __init__(self):
         self.robot = Robot(
             graph=GRAPH,
-            start_node=START_POINT,
-            start_dir=0,
             sensor_pos=SENSOR_POS,
-            state_machine=self
+            start_node=START_POINT,
+            start_dir=0
         )
         self.t = 0 # represents current time
         self.i = 0  # Represents which pickup point we are at (0, 1, 2, 3)

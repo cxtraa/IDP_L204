@@ -1,5 +1,4 @@
 from TrackerSensor import TrackerSensor
-from Motor import Motor
 from constants import *
 
 from math import copysign

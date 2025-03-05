@@ -1,7 +1,7 @@
 from machine import Pin
 
 
-class FlashLed():
+class FlashLed:
     def __init__(self, pin_number: int):
         self.__pin_out = Pin(pin_number, Pin.OUT)
         self.__pin_out.value(0)

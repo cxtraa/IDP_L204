@@ -4,20 +4,19 @@ import heapq
 
 
 class PathFinder:
-    def __init__(self, graph: dict[tuple:list[tuple]]):
+    def __init__(self, graph: dict[tuple[int, int], list[tuple[int, int]]]):
         self.graph = graph
     
 
-    def find_shortest_path(self, node_A: tuple[int,int], node_B: tuple[int,int]) -> tuple[list[tuple[int,int]], int]:
+    def find_shortest_path(self, node_a: tuple[int,int], node_b: tuple[int,int]) -> tuple[list[tuple[int,int]], float]:
         """
         Given nodes A, B, find the shortest path between them, using the lazy version of Dijkstra.
         """
-        N = len(self.graph)
-        pq = [(0, node_A)]
+        pq = [(0, node_a)]
         best = {node : float('inf') for node in self.graph.keys()}
-        prev = {node : None for node in self.graph.keys()}
+        prev = {node : (-999, -999) for node in self.graph.keys()}
         visited = set()
-        best[node_A] = 0
+        best[node_a] = 0
         
         while pq:
             curr_dist, curr_node = heapq.heappop(pq)
@@ -35,10 +34,12 @@ class PathFinder:
                         heapq.heappush(pq, (new_dist, child_node))
                         prev[child_node] = curr_node
         
-        return self.reconstruct_path(prev, node_A, node_B), best[node_B]   
+        return self.reconstruct_path(prev, node_a, node_b), best[node_b]
 
 
-    def reconstruct_path(self, prev: tuple[int,int], start: tuple[int,int], end: tuple[int,int]) -> list[tuple[int,int]]:
+    @staticmethod
+    def reconstruct_path(prev: dict[tuple[int, int], tuple[int,int]], start: tuple[int, int],
+                         end: tuple[int, int]) -> list[tuple[int,int]]:
         """
         From prev (produced by Dijkstra) reconstruct the path.
         We do this by going in reverse order then reversing the array.

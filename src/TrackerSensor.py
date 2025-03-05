@@ -6,5 +6,5 @@ class TrackerSensor:
         self.__pin_in = Pin(pin_number, Pin.IN)
     
 
-    def read(self) -> bool:
+    def read(self) -> int:
         return self.__pin_in.value()
