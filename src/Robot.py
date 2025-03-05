@@ -12,6 +12,7 @@ from FlashLed import FlashLed
 
 from time import sleep, sleep_ms, ticks_ms, ticks_diff
 
+
 class Robot:
     def __init__(self, graph: dict[tuple:list[tuple]], start_node=(0,-29), start_dir=0, sensor_pos = []):
         """
