@@ -48,6 +48,7 @@ class Robot:
 
         self.control = Control(sensor_pos=sensor_pos)
 
+
     def navigate(self, dest : tuple[int, int]) -> None:
         """
         Move the robot to `dest` where multiple nodes might be in between.
@@ -55,6 +56,7 @@ class Robot:
         shortest_path, _ = self.path_finder.find_shortest_path(self.curr_node, dest)
         for i in range(1, len(shortest_path)):
             self.move(shortest_path[i])
+
 
     def forward(self, to_pickup: bool = False) -> None:
         """
@@ -77,6 +79,7 @@ class Robot:
         # The robot should be stationary after reaching the node
         self.left_motor.off()
         self.right_motor.off()
+
 
     def forward_turn_90(self, dir: int, mode : int = SMOOTH) -> None:
         """Turn the robot 90 degrees in the direction indicated by dir.
@@ -186,6 +189,7 @@ class Robot:
         else:
             return 2
 
+
     def move(self, dest : tuple[int, int]):
         """
         Move the robot from the current node to `dest`, where current node and dest are NEIGHBORS.
@@ -215,7 +219,8 @@ class Robot:
         # Turn LED OFF if returning to the start
         if self.curr_node == START_POINT:
             self.flash_led.off()
-    
+
+
     def time_for_path(self, dest : tuple[int, int]) -> None:
         """
         Calculate the time for the robot to reach the node `dest`.
@@ -223,6 +228,7 @@ class Robot:
         _, distance = self.path_finder.find_shortest_path(self.curr_node, dest)
         line_speed = self.total_line_distance / self.total_line_time
         return TIME_SAFETY_FACTOR * (distance * (10e-02)) / line_speed
+
 
     def get_depot_to_goto(self) -> tuple[int, int] | None:
         """
@@ -293,7 +299,8 @@ class Robot:
         print("Dir after pickup_turn:", self.dir)
 
         return dest_node
-    
+
+
     def pickup_turn(self, node : tuple[int, int]):
         """
         Turn in the appropriate direction after collecting the parcel.
@@ -310,6 +317,7 @@ class Robot:
         elif result == 3:
             self.reverse_turn_90(LEFT)
             self.dir = (self.dir - 1) % 4
+
 
     def depot_procedure(self, depot : int) -> None:
         self.left_motor.forward(ROBOT_SPEED_LINE)
@@ -340,6 +348,7 @@ class Robot:
         """
         self.servo.set_angle(0)
         sleep(0.5)
+
 
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]
