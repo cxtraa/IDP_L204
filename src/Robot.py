@@ -274,7 +274,22 @@ class Robot:
         """
 
         # TODO: Use TOF sensor to detect parcel and make sure we are close enough to pick it up
+
+        # Move forward until we don't detect the last junction
+        self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+        self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
+        while self.control.at_junction():
+            sleep(DELTA_T)
+
+        # Wait until the ToF sensor detects a parcel within pickup range.
+        while self.tof_sensor.read_distance() > PARCEL_DETECTION_THRESHOLD:
+            self.left_motor.forward(ROBOT_SPEED_APPROACHING_PARCEL+ self.control.get_pid_error())
+            self.right_motor.forward(ROBOT_SPEED_APPROACHING_PARCEL- self.control.get_pid_error())# Slow approach speed while following the line
+            sleep(0.1)  # Allow time for sensor to update
         
+        self.left_motor.off()
+        self.right_motor.off()
+
         dest_node = self.get_depot_to_goto()
         if dest_node is None: # No parcel found
             dest_node = next_pickup_location
