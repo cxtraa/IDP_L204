@@ -257,16 +257,20 @@ class Robot:
         while self.control.at_junction():
             sleep(DELTA_T)
 
+        # TODO maybe rename get_depot_to_goto?
         # Wait until the ToF sensor detects a parcel within pickup range.
-        while self.tof_sensor.read_distance() > PARCEL_DETECTION_THRESHOLD:
-            self.left_motor.forward(ROBOT_SPEED_APPROACHING_PARCEL+ self.control.get_pid_error())
-            self.right_motor.forward(ROBOT_SPEED_APPROACHING_PARCEL- self.control.get_pid_error())# Slow approach speed while following the line
-            sleep(0.1)  # Allow time for sensor to update
+        dest_node = DEPOT_BLUE_GREEN
+        if (self.tof_sensor is not None) and (self.colour_sensor is not None):
+            while self.tof_sensor.read_distance() > PARCEL_DETECTION_THRESHOLD:
+                self.left_motor.forward(ROBOT_SPEED_APPROACHING_PARCEL+ self.control.get_pid_error())
+                self.right_motor.forward(ROBOT_SPEED_APPROACHING_PARCEL- self.control.get_pid_error())# Slow approach speed while following the line
+                sleep(0.1)  # Allow time for sensor to update
+            dest_node = self.get_depot_to_goto()
         
         self.left_motor.off()
         self.right_motor.off()
 
-        dest_node = self.get_depot_to_goto()
+        
         if dest_node is None: # No parcel found
             dest_node = next_pickup_location
         else:
@@ -282,10 +286,12 @@ class Robot:
 
         # Find the next node on our path to the destination node to deliver the parcel
         path = self.path_finder.find_shortest_path(self.curr_node, dest_node)
-        next_node = path[1]
+        next_node = path[0][1]
 
         # Perform the pickup turn based on the next node we need to reach
+        print("Dir before pickup_turn:", self.dir)
         self.pickup_turn(next_node)
+        print("Dir after pickup_turn:", self.dir)
 
         return dest_node
     

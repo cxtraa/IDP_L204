@@ -12,7 +12,8 @@ class StateMachine:
             graph=GRAPH,
             start_node=START_POINT,
             start_dir=0,
-            sensor_pos=SENSOR_POS
+            sensor_pos=SENSOR_POS,
+            state_machine=self
         )
         self.t = 0 # represents current time
         self.i = 0  # Represents which pickup point we are at (0, 1, 2, 3)
