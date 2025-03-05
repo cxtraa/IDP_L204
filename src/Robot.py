@@ -38,6 +38,9 @@ class Robot:
         self.curr_node = start_node
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
+
+        self.state_machine = state_machine
+        self.prev_time = ticks_ms()
         
         self.control = Control(sensor_pos=sensor_pos)
     
@@ -316,7 +319,10 @@ class Robot:
         self.state_machine.t += curr_time - self.prev_time
         self.prev_time = curr_time
 
-        # Compute the amount of time to return to start
+        time_to_start = self.time_to_start()
+        if TOTAL_ALLOWED_TIME - self.state_machine.t <= time_to_start:
+            self.state_machine.back_to_start()
+            self.state_machine.stop()
     
     def time_to_start(self) -> None:
         """
