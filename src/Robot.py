@@ -72,7 +72,7 @@ class Robot:
 
         if to_pickup:
             pickup_end_time = ticks_ms()
-            self.reverse_time_for_pickup = (pickup_end_time - pickup_start_time)
+            self.reverse_time_for_pickup = ticks_diff(pickup_end_time, pickup_start_time)
         
         # The robot should be stationary after reaching the node
         self.left_motor.off()
