@@ -10,7 +10,7 @@ from TofSensor import TofSensor
 from Button import Button
 from FlashLed import FlashLed
 
-from time import sleep, sleep_ms, ticks_ms, ticks_diff
+from time import sleep, ticks_ms, ticks_diff
 
 class Robot:
     def __init__(self, graph: dict[tuple:list[tuple]], start_node=(0,-29), start_dir=0, sensor_pos = []):
@@ -46,7 +46,10 @@ class Robot:
         self.total_line_distance = 0
         self.total_line_time = 0
 
+        self.turn_time = None
+
         self.control = Control(sensor_pos=sensor_pos)
+
 
     def navigate(self, dest : tuple[int, int]) -> None:
         """
@@ -55,6 +58,7 @@ class Robot:
         shortest_path, _ = self.path_finder.find_shortest_path(self.curr_node, dest)
         for i in range(1, len(shortest_path)):
             self.move(shortest_path[i])
+
 
     def forward(self, to_pickup: bool = False) -> None:
         """
@@ -73,15 +77,20 @@ class Robot:
         if to_pickup:
             pickup_end_time = ticks_ms()
             self.reverse_time_for_pickup = ticks_diff(pickup_end_time, pickup_start_time)
+            self.reverse_time_for_pickup = (pickup_end_time - pickup_start_time) / 1e03
         
         # The robot should be stationary after reaching the node
         self.left_motor.off()
         self.right_motor.off()
 
+
     def forward_turn_90(self, dir: int, mode : int = SMOOTH) -> None:
         """Turn the robot 90 degrees in the direction indicated by dir.
         0 - left
         1 - right"""
+
+        if not self.turn_time:
+            turn_start_time = ticks_ms()
         if dir == LEFT:
             outside_motor = self.right_motor
             inside_motor = self.left_motor
@@ -111,6 +120,9 @@ class Robot:
         outside_motor.off()
         inside_motor.off()
 
+        if not self.turn_time:
+            turn_end_time = ticks_ms()
+            self.turn_time = ticks_diff(turn_end_time, turn_start_time) / 1e03
 
     def reverse_turn_90(self, dir: int) -> None:
         """Turn the robot 90 degrees in the direction indicated by dir."""
@@ -133,7 +145,6 @@ class Robot:
         outside_motor.off()
         inside_motor.off()
 
-
     def turn_180(self, dir : int = LEFT) -> None:
         """
         Turn 180 degrees.
@@ -154,7 +165,6 @@ class Robot:
         while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
             sleep(DELTA_T)
     
-
     def change_dir(self, desired_dir : int, mode : int = SMOOTH) -> None:
         """
         Decide whether to call turn_left(), turn_right() or turn_180()
@@ -168,7 +178,6 @@ class Robot:
             self.turn_180()
 
         self.dir = desired_dir
-
 
     def get_dir(self, node_A, node_B):
         """
@@ -185,6 +194,7 @@ class Robot:
             return 0
         else:
             return 2
+
 
     def move(self, dest : tuple[int, int]):
         """
@@ -206,8 +216,8 @@ class Robot:
 
         line_start_time = ticks_ms()
         self.forward(to_pickup=(dest in PICKUP_POINTS))
-        self.total_line_time += ticks_ms() - line_start_time
-        self.total_line_distance += abs(x_2 - x_1) + abs(y_2 - y_1)
+        self.total_line_time += (ticks_ms() - line_start_time) / 10e03
+        self.total_line_distance += (abs(x_2 - x_1) + abs(y_2 - y_1)) / 10e02
 
         # Update current node
         self.curr_node = dest
@@ -215,14 +225,23 @@ class Robot:
         # Turn LED OFF if returning to the start
         if self.curr_node == START_POINT:
             self.flash_led.off()
-    
+
+
     def time_for_path(self, dest : tuple[int, int]) -> None:
         """
         Calculate the time for the robot to reach the node `dest`.
         """
-        _, distance = self.path_finder.find_shortest_path(self.curr_node, dest)
+        path, distance = self.path_finder.find_shortest_path(self.curr_node, dest)
         line_speed = self.total_line_distance / self.total_line_time
-        return TIME_SAFETY_FACTOR * (distance * (10e-02)) / line_speed
+        curr_dir = self.dir
+        num_turns = 0
+
+        # Find the number of turns made
+        for i in range(1, len(path)):
+            if self.get_dir(path[i-1], path[i]) != curr_dir:
+                num_turns += 1
+
+        return TIME_SAFETY_FACTOR * ((num_turns * self.turn_time) + (distance * (10e-02)) / line_speed)
 
     def get_depot_to_goto(self) -> tuple[int, int] | None:
         """
@@ -238,7 +257,6 @@ class Robot:
             return DEPOT_BLUE_GREEN
         else:
             return None
-
 
     def pickup_parcel(self, next_pickup_location : tuple[int, int]) -> tuple[int, int]:
         """
@@ -286,7 +304,7 @@ class Robot:
         prev_node = GRAPH[self.curr_node][0]
         self.left_motor.reverse(ROBOT_SPEED_LINE)
         self.right_motor.reverse(ROBOT_SPEED_LINE)
-        sleep_ms(self.reverse_time_for_pickup)
+        sleep(self.reverse_time_for_pickup)
         self.curr_node = prev_node
 
         # Find the next node on our path to the destination node to deliver the parcel
@@ -299,7 +317,8 @@ class Robot:
         print("Dir after pickup_turn:", self.dir)
 
         return dest_node
-    
+
+
     def pickup_turn(self, node : tuple[int, int]):
         """
         Turn in the appropriate direction after collecting the parcel.
@@ -316,6 +335,7 @@ class Robot:
         elif result == 3:
             self.reverse_turn_90(LEFT)
             self.dir = (self.dir - 1) % 4
+
 
     def depot_procedure(self, depot : int) -> None:
         self.left_motor.forward(ROBOT_SPEED_LINE)
@@ -346,6 +366,7 @@ class Robot:
         """
         self.servo.set_angle(0)
         sleep(0.5)
+
 
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]
