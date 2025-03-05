@@ -44,8 +44,11 @@ class Robot:
         self.start_button = Button(START_BUTTON_PIN)
         self.dir = start_dir
         self.curr_node = start_node
+
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
+        self.state_machine = state_machine
+        self.prev_time = ticks_ms()
 
         self.__last_time_slow_pickup = 0
         self.__last_time_fast_pickup = 0
@@ -234,7 +237,7 @@ class Robot:
 
         # Update timings
         curr_time = ticks_ms()
-        self.state_machine.t += curr_time - self.prev_time
+        self.state_machine.t += ticks_diff(curr_time, self.prev_time)
         self.prev_time = curr_time
 
         # Compute the amount of time to return to start
