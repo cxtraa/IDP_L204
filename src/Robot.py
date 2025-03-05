@@ -315,10 +315,12 @@ class Robot:
 
         # Find the next node on our path to the destination node to deliver the parcel
         path = self.path_finder.find_shortest_path(self.curr_node, dest_node)
-        next_node = path[0][0]
+        next_node = path[0][1]
 
         # Perform the pickup turn based on the next node we need to reach
+        print("Dir before pickup_turn:", self.dir)
         self.pickup_turn(next_node)
+        print("Dir after pickup_turn:", self.dir)
 
         return dest_node
     
