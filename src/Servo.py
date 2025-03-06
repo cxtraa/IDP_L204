@@ -1,7 +1,7 @@
 from machine import Pin, PWM
 
 
-class Servo():
+class Servo:
     MAX_DUTY = 7864
     MIN_DUTY = 1802
     DELTA_DUTY = MAX_DUTY - MIN_DUTY

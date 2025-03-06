@@ -1,5 +1,4 @@
 from machine import Pin, PWM
-from time import sleep
 
 
 class Motor:
@@ -28,7 +27,7 @@ class Motor:
             percentage = 100
         elif percentage < 0:
             percentage = 0
-        duty_cycle = int((2**16 - 1) * (percentage / 100)) # the board expects a 16 bit unsigned integer from 0 - (2^16-1) inclusive
+        duty_cycle = int((2**16 - 1) * (percentage / 100)) # the board expects a 16-bit unsigned integer from 0 - (2^16-1) inclusive
         self.pwm.duty_u16(duty_cycle)
 
 

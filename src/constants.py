@@ -29,6 +29,8 @@ START_POINT = (0,-29)
 
 LEFT = 0
 RIGHT = 1
+FORWARDS = 0
+BACKWARDS = 1
 
 # Pin configuration
 IR1_PIN = 11
