@@ -11,7 +11,6 @@ class TofSensor:
         self.__vl.set_Vcsel_pulse_period(self.__vl.vcsel_period_type[0], 12)
         self.__vl.set_Vcsel_pulse_period(self.__vl.vcsel_period_type[1], 8)
 
-
     def read_distance(self) -> int:
         # Returns distance read by TOF sensor in mm
         return self.__vl.ping() - TOF_SENSOR_OFFSET

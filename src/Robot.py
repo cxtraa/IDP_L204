@@ -12,8 +12,9 @@ from FlashLed import FlashLed
 
 from time import sleep, ticks_ms, ticks_diff
 
+
 class Robot:
-    def __init__(self, graph: dict[tuple:list[tuple]], sensor_pos, start_node=(0,-29), start_dir=0):
+    def __init__(self, graph: dict[tuple:list[tuple]], sensor_pos, start_node=(0, -29), start_dir=0):
         """
         The possible robot directions are:
             - 0 North
@@ -42,22 +43,19 @@ class Robot:
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
 
-        self.reverse_time_for_pickup = None
         self.total_line_distance = 0
         self.total_line_time = 0
 
         self.turn_time = None
         self.control = Control(sensor_pos=sensor_pos)
 
-
-    def navigate(self, dest : tuple[int, int]) -> None:
+    def navigate(self, dest: tuple[int, int]) -> None:
         """
         Move the robot to `dest` where multiple nodes might be in between.
         """
         shortest_path, _ = self.path_finder.find_shortest_path(self.curr_node, dest)
         for i in range(1, len(shortest_path)):
             self.move(shortest_path[i])
-
 
     def forward(self) -> None:
         """
@@ -68,19 +66,19 @@ class Robot:
             self.left_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
             self.right_motor.forward(ROBOT_SPEED_LINE - self.control.get_pid_error())
             sleep(DELTA_T)
-        
+
         # The robot should be stationary after reaching the node
         self.left_motor.off()
         self.right_motor.off()
 
-
-    def turn_90(self, direction: int, travel: int = FORWARDS, mode : int = SMOOTH) -> None:
+    def turn_90(self, direction: int, travel: int = FORWARDS, mode: int = SMOOTH) -> None:
         """Turn the robot 90 degrees in the direction indicated by dir.
         0 - left
         1 - right"""
 
         if not self.turn_time:
             turn_start_time = ticks_ms()
+
         if direction == LEFT:
             outside_motor = self.right_motor
             inside_motor = self.left_motor
@@ -88,8 +86,8 @@ class Robot:
             outside_motor = self.left_motor
             inside_motor = self.right_motor
         else:
-            raise(ValueError("Invalid direction: dir must be 0 (left) or 1 (right)"))
-        
+            raise (ValueError("Invalid direction: dir must be 0 (left) or 1 (right)"))
+
         if mode == SHARP:
             self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
             self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
@@ -115,8 +113,7 @@ class Robot:
             turn_end_time = ticks_ms()
             self.turn_time = ticks_diff(turn_end_time, turn_start_time) / 1e03
 
-
-    def turn_180(self, direction : int = LEFT) -> None:
+    def turn_180(self, direction: int = LEFT) -> None:
         """
         Turn 180 degrees.
         """
@@ -138,21 +135,19 @@ class Robot:
         while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
             sleep(DELTA_T)
 
-
-    def change_dir(self, desired_dir : int, mode : int = SMOOTH) -> None:
+    def change_dir(self, desired_dir: int, mode: int = SMOOTH) -> None:
         """
         Decide whether to call turn_left(), turn_right() or turn_180()
         """
 
         if desired_dir == (self.dir + 1) % 4:
-            self.turn_90(RIGHT, FORWARDS, mode) # Turn right
+            self.turn_90(RIGHT, FORWARDS, mode)  # Turn right
         elif desired_dir == (self.dir - 1) % 4:
-            self.turn_90(LEFT, FORWARDS, mode) # Turn left
+            self.turn_90(LEFT, FORWARDS, mode)  # Turn left
         elif desired_dir == (self.dir + 2) % 4:
             self.turn_180()
 
         self.dir = desired_dir
-
 
     @staticmethod
     def get_dir(node_a, node_b):
@@ -171,8 +166,7 @@ class Robot:
         else:
             return 2
 
-
-    def move(self, dest : tuple[int, int]):
+    def move(self, dest: tuple[int, int]):
         """
         Move the robot from the current node to `dest`, where current node and dest are NEIGHBORS.
 
@@ -182,12 +176,8 @@ class Robot:
         x_1, y_1 = self.curr_node
         x_2, y_2 = dest
 
-        to_pickup = dest in PICKUP_POINTS
-
-        turn_mode = SHARP if to_pickup else SMOOTH
-
         desired_dir = self.get_dir(self.curr_node, dest)
-        self.change_dir(desired_dir, turn_mode)
+        self.change_dir(desired_dir)
         # Start flashing led when leaving the start point
         if self.curr_node == START_POINT:
             self.flash_led.flash()
@@ -197,9 +187,6 @@ class Robot:
         line_end_time = ticks_ms()
 
         line_time = ticks_diff(line_end_time, line_start_time) / 1e03
-
-        if to_pickup:
-            self.reverse_time_for_pickup = line_time
 
         self.total_line_time += line_time
         self.total_line_distance += (abs(x_2 - x_1) + abs(y_2 - y_1)) / 1e02
@@ -211,30 +198,28 @@ class Robot:
         if self.curr_node == START_POINT:
             self.flash_led.off()
 
-
-    def time_for_path(self, dest : tuple[int, int]) -> float:
+    def time_for_path(self, node_a: tuple[int, int], node_b: tuple[int, int], start_dir: int) -> tuple[float, int]:
         """
         Calculate the time for the robot to reach the node `dest`.
         """
-        path, distance = self.path_finder.find_shortest_path(self.curr_node, dest)
+        path, distance = self.path_finder.find_shortest_path(node_a, node_b)
         line_speed = self.total_line_distance / self.total_line_time
-        curr_dir = self.dir
+        curr_dir = start_dir
+        new_dir = curr_dir
         num_turns = 0
 
         # Find the number of turns made
         for i in range(1, len(path)):
-            new_dir = self.get_dir(path[i-1], path[i])
+            new_dir = self.get_dir(path[i - 1], path[i])
             if abs(curr_dir - new_dir) == 1:
                 num_turns += 1
             elif abs(curr_dir - new_dir) == 2:
                 num_turns += 2
 
-        return TIME_SAFETY_FACTOR * ((num_turns * self.turn_time) + (distance * (1e-02)) / line_speed)
-
+        return TIME_SAFETY_FACTOR * ((num_turns * self.turn_time) + (distance * 1e-02) / line_speed), new_dir
 
     def get_depot_to_goto(self) -> tuple[int, int] | None:
         """
-        TODO: color sensing logic should go here.
         can return:
         DEPOT_RED_YELLOW, DEPOT_BLUE_GREEN, None
         """
@@ -247,8 +232,7 @@ class Robot:
         else:
             return None
 
-
-    def pickup_parcel(self, next_pickup_location : tuple[int, int]) -> tuple[int, int]:
+    def pickup_parcel(self) -> tuple[int, int] | None:
         """
         Robot procedure for picking up a parcel. Returns the destination depot, or None if there is no parcel.
         0 - no parcel found
@@ -256,60 +240,37 @@ class Robot:
         2 - blue/green
         """
 
-        # TODO: Use TOF sensor to detect parcel and make sure we are close enough to pick it up
+        start_time_forwards = ticks_ms()
 
-        # Move forward until we don't detect the last junction
-        self.left_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
-        self.right_motor.forward(ROBOT_SPEED_MISS_JUNCTION)
-        while self.control.at_junction():
-            sleep(DELTA_T)
-
-        # TODO maybe rename get_depot_to_goto?
-        # Wait until the ToF sensor detects a parcel within pickup range.
-        dest_node = DEPOT_BLUE_GREEN
-        if (self.tof_sensor is not None) and (self.colour_sensor is not None):
-            while (self.tof_sensor.read_distance() > PARCEL_DETECTION_THRESHOLD) and (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
-                self.left_motor.forward(ROBOT_SPEED_APPROACHING_PARCEL+ self.control.get_pid_error())
-                self.right_motor.forward(ROBOT_SPEED_APPROACHING_PARCEL- self.control.get_pid_error())# Slow approach speed while following the line
-                sleep(0.1)  # Allow time for sensor to update
-            dest_node = self.get_depot_to_goto()
-        
+        # Go forward until package detected or junction reached.
+        while (self.tof_sensor.read_distance() > PARCEL_DETECTION_THRESHOLD) and not self.control.at_junction():
+            self.left_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
+            self.right_motor.forward(ROBOT_SPEED_LINE - self.control.get_pid_error())
+            sleep(DELTA_T)  # Allow time for sensor to update
+        sleep(0.1) # Short delay to account for noise in TOF reading
         self.left_motor.off()
         self.right_motor.off()
 
-        # Move backward until we detect the last junction
-        self.left_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
-        self.right_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
-        while not self.control.at_junction():
-            sleep(DELTA_T)
+        end_time_forwards = ticks_ms()
 
-        
-        if dest_node is None: # No parcel found
-            dest_node = next_pickup_location
-        else:
+        total_time_forwards = ticks_diff(end_time_forwards, start_time_forwards) / 1e03
+
+        if self.tof_sensor.read_distance() <= PARCEL_DETECTION_THRESHOLD:
+            dest_node = self.get_depot_to_goto()
             self.servo.set_angle(30)
             sleep(0.5)
+        else:
+            dest_node = None
 
-        # We are at a pickup point, find the node before us (there is only 1) and move to it
-        prev_node = GRAPH[self.curr_node][0]
         self.left_motor.reverse(ROBOT_SPEED_LINE)
         self.right_motor.reverse(ROBOT_SPEED_LINE)
-        sleep(self.reverse_time_for_pickup)
-        self.curr_node = prev_node
-
-        # Find the next node on our path to the destination node to deliver the parcel
-        path = self.path_finder.find_shortest_path(self.curr_node, dest_node)
-        next_node = path[0][1]
-
-        # Perform the pickup turn based on the next node we need to reach
-        print("Dir before pickup_turn:", self.dir)
-        self.pickup_turn(next_node)
-        print("Dir after pickup_turn:", self.dir)
+        sleep(total_time_forwards)
+        self.left_motor.off()
+        self.right_motor.off()
 
         return dest_node
 
-
-    def pickup_turn(self, node : tuple[int, int]):
+    def pickup_turn(self, node: tuple[int, int]):
         """
         Turn in the appropriate direction after collecting the parcel.
         """
@@ -326,14 +287,13 @@ class Robot:
             self.turn_90(LEFT, BACKWARDS)
             self.dir = (self.dir - 1) % 4
 
-
-    def depot_procedure(self, depot : tuple[int, int]) -> None:
+    def depot_procedure(self, depot: tuple[int, int]) -> None:
         self.left_motor.forward(ROBOT_SPEED_LINE)
         self.right_motor.forward(ROBOT_SPEED_LINE)
         sleep(TIME_FORWARD_AT_DEPOT)
 
         self.deposit_parcel()
-        
+
         self.left_motor.reverse(ROBOT_SPEED_TURN)
         self.right_motor.reverse(ROBOT_SPEED_TURN)
         while self.control.get_ir_readings()[0] or self.control.get_ir_readings()[3]:
@@ -347,8 +307,7 @@ class Robot:
             self.turn_180(RIGHT)
         self.dir = (self.dir + 2) % 4
         self.forward()
-        self.curr_node = GRAPH[depot][0]
-
+        self.curr_node = self.graph[depot][0]
 
     def deposit_parcel(self):
         """
@@ -356,7 +315,6 @@ class Robot:
         """
         self.servo.set_angle(0)
         sleep(0.5)
-
 
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]

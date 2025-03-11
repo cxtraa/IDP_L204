@@ -13,12 +13,14 @@ def main():
         
     while not state_machine.should_end:
         try:
-            state_machine.update()
+            finished = state_machine.update()
+            if finished:
+                break
         except Exception as e:
             sys.print_exception(e)
+            state_machine.back_to_start()
             break
-    
-    state_machine.back_to_start()
+
     print("Program finished successfully.")
 
 if __name__ == "__main__":

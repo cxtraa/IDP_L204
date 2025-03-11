@@ -11,26 +11,23 @@ class Motor:
         self.pwm = PWM(Pin(pwm_pin))
         self.pwm.freq(1000)
         self.pwm.duty_u16(0)
-    
 
     def off(self) -> None:
         self.pwm.duty_u16(0)
-    
 
-    def forward(self, speed : float) -> None:
+    def forward(self, speed: float) -> None:
         self.dir.value(0)
         self.set_duty_cycle(speed)
-    
 
-    def set_duty_cycle(self, percentage : float) -> None:
+    def set_duty_cycle(self, percentage: float) -> None:
         if percentage > 100:
             percentage = 100
         elif percentage < 0:
             percentage = 0
-        duty_cycle = int((2**16 - 1) * (percentage / 100)) # the board expects a 16-bit unsigned integer from 0 - (2^16-1) inclusive
+        duty_cycle = int((2 ** 16 - 1) * (
+                    percentage / 100))  # the board expects a 16-bit unsigned integer from 0 - (2^16-1) inclusive
         self.pwm.duty_u16(duty_cycle)
 
-
-    def reverse(self, speed : float) -> None:
+    def reverse(self, speed: float) -> None:
         self.dir.value(1)
         self.set_duty_cycle(speed)
