@@ -270,7 +270,6 @@ class Robot:
 
         # TODO maybe rename get_depot_to_goto?
         # Wait until the ToF sensor detects a parcel within pickup range.
-        dest_node = DEPOT_BLUE_GREEN
         if (self.tof_sensor is not None) and (self.colour_sensor is not None):
             while (self.tof_sensor.read_distance() > PARCEL_DETECTION_THRESHOLD) and (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
                 self.left_motor.forward(ROBOT_SPEED_APPROACHING_PARCEL+ self.control.get_pid_error())
@@ -281,18 +280,18 @@ class Robot:
         self.left_motor.off()
         self.right_motor.off()
 
-        # Move backward until we detect the last junction
-        self.left_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
-        self.right_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
-        while not self.control.at_junction():
-            sleep(DELTA_T)
-
         
         if dest_node is None: # No parcel found
             dest_node = next_pickup_location
         else:
             self.servo.set_angle(30)
             sleep(0.5)
+
+        # Move backward until we detect the last junction
+        self.left_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
+        self.right_motor.reverse(ROBOT_SPEED_MISS_JUNCTION)
+        while not self.control.at_junction():
+            sleep(DELTA_T)
 
         # We are at a pickup point, find the node before us (there is only 1) and move to it
         prev_node = GRAPH[self.curr_node][0]
