@@ -42,10 +42,10 @@ class Robot:
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
 
+        # All uninitialised to begin with
         self.reverse_time_for_pickup = None
         self.total_line_distance = 0
         self.total_line_time = 0
-
         self.turn_time = None
         self.control = Control(sensor_pos=sensor_pos)
 
@@ -132,7 +132,6 @@ class Robot:
         elif direction == RIGHT:
             outside_motor = self.left_motor
             inside_motor = self.right_motor
-            self.dir = (self.dir + 2) % 4
         else:
             raise ValueError("Invalid direction: direction must be 0 (Left) or 1 (Right)")
 
@@ -158,7 +157,6 @@ class Robot:
 
         self.dir = desired_dir
 
-
     @staticmethod
     def get_dir(node_a, node_b):
         """
@@ -175,7 +173,6 @@ class Robot:
             return 0
         else:
             return 2
-
 
     def move(self, dest : tuple[int, int]):
         """
@@ -207,11 +204,13 @@ class Robot:
         if self.curr_node == START_POINT:
             self.flash_led.off()
 
-
     def time_for_path(self, dest : tuple[int, int]) -> float:
         """
         Calculate the time for the robot to reach the node `dest`.
         """
+        if not self.turn_time or self.total_line_time == 0:
+            return 0
+        
         path, distance = self.path_finder.find_shortest_path(self.curr_node, dest)
         line_speed = self.total_line_distance / self.total_line_time
         curr_dir = self.dir
@@ -318,7 +317,6 @@ class Robot:
         elif result == 3:
             self.turn_90(LEFT, BACKWARDS)
             self.dir = (self.dir - 1) % 4
-
 
     def depot_procedure(self, depot : tuple[int, int]) -> None:
         self.left_motor.forward(ROBOT_SPEED_LINE)
