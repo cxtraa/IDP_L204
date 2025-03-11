@@ -202,8 +202,9 @@ class Robot:
         """
         Calculate the time for the robot to reach the node `dest`.
         """
+
         path, distance = self.path_finder.find_shortest_path(node_a, node_b)
-        line_speed = self.total_line_distance / self.total_line_time
+        line_speed = self.total_line_distance / self.total_line_time if self.total_line_time != 0 else None
         curr_dir = start_dir
         new_dir = curr_dir
         num_turns = 0
@@ -216,7 +217,10 @@ class Robot:
             elif abs(curr_dir - new_dir) == 2:
                 num_turns += 2
 
-        return TIME_SAFETY_FACTOR * ((num_turns * self.turn_time) + (distance * 1e-02) / line_speed), new_dir
+        if line_speed:
+            return (TIME_SAFETY_FACTOR * ((num_turns * self.turn_time) + (distance * 1e-02) / line_speed), new_dir)
+        else:
+            return (0, new_dir)
 
     def get_depot_to_goto(self) -> tuple[int, int] | None:
         """
@@ -255,6 +259,7 @@ class Robot:
 
         total_time_forwards = ticks_diff(end_time_forwards, start_time_forwards) / 1e03
 
+        print(self.tof_sensor.read_distance())
         if self.tof_sensor.read_distance() <= PARCEL_DETECTION_THRESHOLD:
             dest_node = self.get_depot_to_goto()
             self.servo.set_angle(30)
