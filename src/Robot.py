@@ -216,6 +216,10 @@ class Robot:
         """
         Calculate the time for the robot to reach the node `dest`.
         """
+
+        if not self.turn_time or self.total_line_time == 0:
+            return 0
+        
         path, distance = self.path_finder.find_shortest_path(self.curr_node, dest)
         line_speed = self.total_line_distance / self.total_line_time
         curr_dir = self.dir
