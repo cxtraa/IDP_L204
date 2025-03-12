@@ -1,7 +1,7 @@
 from constants import *
 from Robot import Robot
 
-from time import ticks_ms, ticks_diff
+from time import ticks_ms, ticks_diff, sleep
 
 
 class StateMachine:
@@ -12,16 +12,17 @@ class StateMachine:
             start_node=START_POINT,
             start_dir=0
         )
-        self.time_start = ticks_ms() # represents current time
+        self.time_start = ticks_ms()  # represents current time
         self.i = 0  # Represents which pickup point we are at (0, 1, 2, 3)
         self.num_empty_parcel = 0
         self.should_end = False
 
     def start_procedure(self) -> None:
+        self.robot.left_motor.forward(ROBOT_SPEED_LINE)
+        self.robot.right_motor.forward(ROBOT_SPEED_LINE)
         while not self.robot.control.at_junction():
-            self.robot.left_motor.forward(ROBOT_SPEED_LINE)
-            self.robot.right_motor.forward(ROBOT_SPEED_LINE)        
-        
+            sleep(DELTA_T)
+
         self.robot.left_motor.off()
         self.robot.right_motor.off()
 
@@ -48,7 +49,8 @@ class StateMachine:
             self.robot.navigate(node_adj_to_pickup)
             self.robot.change_dir(self.robot.get_dir(node_adj_to_pickup, pickup_location), SHARP)
 
-            dest_node = self.robot.pickup_parcel()
+            tight_space = pickup_location in PICKUP_POINTS[1:]
+            dest_node = self.robot.pickup_parcel(tight_space=tight_space)
 
             print(f"The destination node is {dest_node}.")
 
@@ -80,7 +82,7 @@ class StateMachine:
         if go_home_flag:
             self.back_to_start()
 
-    def check_safe_to_go(self, dest : tuple[int, int]) -> bool:
+    def check_safe_to_go(self, dest: tuple[int, int]) -> bool:
         time_to_dest, dest_dir = self.robot.time_for_path(self.robot.curr_node, dest, self.robot.dir)
         time_home, _ = self.robot.time_for_path(dest, START_POINT, dest_dir)
 
@@ -89,3 +91,4 @@ class StateMachine:
 
     def back_to_start(self) -> None:
         self.robot.navigate(START_POINT)
+

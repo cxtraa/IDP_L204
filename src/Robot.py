@@ -241,7 +241,13 @@ class Robot:
         can return:
         DEPOT_RED_YELLOW, DEPOT_BLUE_GREEN, None
         """
-        parcel_colour = self.colour_sensor.read_colour()
+        parcel_colour_readings = []
+        for i in range(5):
+            sleep(0.2)
+            parcel_colour_readings.append(self.colour_sensor.read_rgbc())
+        print(parcel_colour_readings)
+        parcel_rgbc = max(set(parcel_colour_readings), key=parcel_colour_readings.count)
+        parcel_colour = COLOUR_READINGS[min(COLOUR_READINGS, key=lambda x: ColourSensor.colour_error(parcel_rgbc, x))]
 
         if parcel_colour in [RED, YELLOW]:
             return DEPOT_RED_YELLOW
@@ -250,7 +256,7 @@ class Robot:
         else:
             return None
 
-    def pickup_parcel(self) -> tuple[int, int] | None:
+    def pickup_parcel(self, tight_space: bool = False) -> tuple[int, int] | None:
         """
         Robot procedure for picking up a parcel. Returns the destination depot, or None if there is no parcel.
         0 - no parcel found
@@ -259,27 +265,41 @@ class Robot:
         """
         moving_avg_list = [float('inf')]*5
         i = 0
+        if tight_space:
+            self.left_motor.reverse(ROBOT_SPEED_LINE)
+            self.right_motor.reverse(ROBOT_SPEED_LINE)
+            sleep(TIGHT_SPACE_REVERSE_TIME)
+            self.left_motor.off()
+            self.right_motor.off()
         self.servo.set_angle(0)
-        sleep(0.5)
+        sleep(0.3)
+        if tight_space:
+            self.left_motor.forward(ROBOT_SPEED_LINE)
+            self.right_motor.forward(ROBOT_SPEED_LINE)
+            sleep(TIGHT_SPACE_REVERSE_TIME)
+            self.left_motor.off()
+            self.right_motor.off()
         start_time_forwards = ticks_ms()
 
         # Go forward until package detected or junction reached.
-        while (sum(moving_avg_list)/len(moving_avg_list) > PARCEL_DETECTION_THRESHOLD) and not self.control.at_junction():
+        moving_avg = sum(moving_avg_list)/len(moving_avg_list)
+        while moving_avg  > PARCEL_DETECTION_THRESHOLD and not self.control.at_junction():
             moving_avg_list[i] = self.tof_sensor.read_distance()
             self.left_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
             self.right_motor.forward(ROBOT_SPEED_LINE - self.control.get_pid_error())
             sleep(DELTA_T)  # Allow time for sensor to update
             i = (i + 1) % len(moving_avg_list)
+            moving_avg = sum(moving_avg_list) / len(moving_avg_list)
         sleep(0.1)  # Short delay to account for noise in TOF reading
         self.left_motor.off()
         self.right_motor.off()
 
         end_time_forwards = ticks_ms()
 
-        total_time_forwards = ticks_diff(end_time_forwards, start_time_forwards) / 1e03
+        total_time_forwards = 0.1 + ticks_diff(end_time_forwards, start_time_forwards) / 1e03
 
         self.servo.set_angle(45)
-        sleep(1.0)
+        sleep(0.2)
 
         if self.tof_sensor.read_distance() <= PARCEL_DETECTION_THRESHOLD:
             dest_node = self.get_depot_to_goto()
@@ -349,4 +369,3 @@ class Robot:
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]
         return f"Position: {self.curr_node} | Direction : {directions[self.dir]}"
-

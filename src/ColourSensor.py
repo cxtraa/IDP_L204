@@ -29,5 +29,5 @@ class ColourSensor:
             return COLOUR_READINGS[min(COLOUR_READINGS, key=lambda x: ColourSensor.colour_error(temp_lux, x))]
 
     @staticmethod
-    def colour_error(temp_lux_in, temp_lux_ref) -> int:
-        return sum(abs(temp_lux_in[i] - temp_lux_ref[i]) for i in range(2))
+    def colour_error(rgbc_in, rgbc_ref) -> int:
+        return sum(abs(rgbc_in[i] - rgbc_ref[i]) for i in range(len(rgbc_in)))
