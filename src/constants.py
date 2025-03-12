@@ -56,7 +56,7 @@ ROBOT_WIDTH = 175
 PARCEL_DETECTION_THRESHOLD = 10  # Distance in mm to confirm parcel presence
 
 # Line following
-K_P = 10.0
+K_P = 20.0
 K_D = 0.5
 K_I = 0.001
 
@@ -96,5 +96,5 @@ COLOUR_READINGS = {
     (4518.424, 0.11455): BLUE # Blue
 }
 
-SENSOR_POS = [-5.25, -0.75, 0.75, 5.25]
+SENSOR_POS = [-5.25, -0.95, 0.95, 5.25]
 TOF_SENSOR_OFFSET = 55

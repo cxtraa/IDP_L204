@@ -206,6 +206,7 @@ class Robot:
         """
         Calculate the time for the robot to reach the node `dest`.
         """
+
         path, distance = self.path_finder.find_shortest_path(node_a, node_b)
         if self.total_line_time == 0:
             line_speed = APPROX_LINE_SPEED
@@ -223,7 +224,10 @@ class Robot:
             elif abs(curr_dir - new_dir) == 2:
                 num_turns += 2
 
-        return TIME_SAFETY_FACTOR * ((num_turns * self.turn_time) + (distance * 1e-02) / line_speed), new_dir
+        if line_speed:
+            return (TIME_SAFETY_FACTOR * ((num_turns * self.turn_time) + (distance * 1e-02) / line_speed), new_dir)
+        else:
+            return (0, new_dir)
 
     def get_depot_to_goto(self) -> tuple[int, int] | None:
         """

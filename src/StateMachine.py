@@ -41,6 +41,8 @@ class StateMachine:
 
             dest_node = self.robot.pickup_parcel()
 
+            print(f"The destination node is {dest_node}.")
+
             if dest_node in [DEPOT_RED_YELLOW, DEPOT_BLUE_GREEN]:
                 if self.check_safe_to_go(dest_node):
                     self.robot.pickup_turn(dest_node)
