@@ -25,7 +25,7 @@ class Robot:
         self.left_motor = Motor(LEFT_MOTOR_NUM)
         self.right_motor = Motor(RIGHT_MOTOR_NUM)
         self.servo = Servo(SERVO_NUM)
-        self.servo.set_angle(0)
+        self.servo.set_angle(45)
 
         self.flash_led = FlashLed(FLASH_LED_PIN)
         try:
@@ -46,7 +46,7 @@ class Robot:
         self.total_line_distance = 0
         self.total_line_time = 0
 
-        self.turn_time = None
+        self.turn_time = 0
         self.control = Control(sensor_pos=sensor_pos)
 
     def navigate(self, dest: tuple[int, int]) -> None:
@@ -177,7 +177,11 @@ class Robot:
         x_2, y_2 = dest
 
         desired_dir = self.get_dir(self.curr_node, dest)
-        self.change_dir(desired_dir)
+        if dest in PICKUP_POINTS:
+            mode = SHARP
+        else:
+            mode = SMOOTH
+        self.change_dir(desired_dir, mode)
         # Start flashing led when leaving the start point
         if self.curr_node == START_POINT:
             self.flash_led.flash()
@@ -203,7 +207,10 @@ class Robot:
         Calculate the time for the robot to reach the node `dest`.
         """
         path, distance = self.path_finder.find_shortest_path(node_a, node_b)
-        line_speed = self.total_line_distance / self.total_line_time
+        if self.total_line_time == 0:
+            line_speed = APPROX_LINE_SPEED
+        else:
+            line_speed = self.total_line_distance / self.total_line_time
         curr_dir = start_dir
         new_dir = curr_dir
         num_turns = 0
@@ -239,7 +246,8 @@ class Robot:
         1 - red/yellow
         2 - blue/green
         """
-
+        self.servo.set_angle(0)
+        sleep(0.5)
         start_time_forwards = ticks_ms()
 
         # Go forward until package detected or junction reached.
@@ -257,10 +265,11 @@ class Robot:
 
         if self.tof_sensor.read_distance() <= PARCEL_DETECTION_THRESHOLD:
             dest_node = self.get_depot_to_goto()
-            self.servo.set_angle(30)
-            sleep(0.5)
         else:
             dest_node = None
+
+        self.servo.set_angle(45)
+        sleep(0.5)
 
         self.left_motor.reverse(ROBOT_SPEED_LINE)
         self.right_motor.reverse(ROBOT_SPEED_LINE)
@@ -300,6 +309,8 @@ class Robot:
             sleep(DELTA_T)
         self.left_motor.off()
         self.right_motor.off()
+
+        self.servo.set_angle(45)
 
         if depot == DEPOT_RED_YELLOW:
             self.turn_180(LEFT)

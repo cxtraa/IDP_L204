@@ -31,6 +31,7 @@ class StateMachine:
 
         # Check if we're safe to go to pickup point and look for parcel
         pickup_location = PICKUP_POINTS[self.i]
+        print(pickup_location)
         go_home_flag = True
         if self.check_safe_to_go(pickup_location):
             go_home_flag = False
@@ -53,6 +54,7 @@ class StateMachine:
                 next_pickup = PICKUP_POINTS[(self.i + 1) % 4]
 
                 if self.check_safe_to_go(next_pickup):
+                    print(next_pickup)
                     self.robot.pickup_turn(next_pickup)
                 else:
                     self.robot.pickup_turn(START_POINT)
