@@ -19,5 +19,5 @@ class Servo:
         elif angle < 0:
             angle = 0
 
-        duty_cycle = Servo.MIN_DUTY + Servo.DELTA_DUTY * angle / 270
+        duty_cycle = Servo.MAX_DUTY - Servo.DELTA_DUTY * angle / 270
         self.__pwm.duty_u16(int(duty_cycle))
