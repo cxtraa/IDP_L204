@@ -304,10 +304,11 @@ class Robot:
 
         self.deposit_parcel()
 
-        self.left_motor.reverse(ROBOT_SPEED_TURN)
-        self.right_motor.reverse(ROBOT_SPEED_TURN)
+        self.left_motor.reverse(ROBOT_SPEED_LINE)
+        self.right_motor.reverse(ROBOT_SPEED_LINE)
         while self.control.get_ir_readings()[0] or self.control.get_ir_readings()[3]:
             sleep(DELTA_T)
+        sleep(EXTRA_REVERSE_TIME_AT_DEPOT)
         self.left_motor.off()
         self.right_motor.off()
 
