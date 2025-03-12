@@ -235,6 +235,7 @@ class Robot:
         DEPOT_RED_YELLOW, DEPOT_BLUE_GREEN, None
         """
         parcel_colour = self.colour_sensor.read_colour()
+        print(parcel_colour)
 
         if parcel_colour in [RED, YELLOW]:
             return DEPOT_RED_YELLOW
@@ -259,7 +260,7 @@ class Robot:
             self.left_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
             self.right_motor.forward(ROBOT_SPEED_LINE - self.control.get_pid_error())
             sleep(DELTA_T)  # Allow time for sensor to update
-        sleep(0.1) # Short delay to account for noise in TOF reading
+        sleep(0.1)  # Short delay to account for noise in TOF reading
         self.left_motor.off()
         self.right_motor.off()
 
@@ -267,14 +268,13 @@ class Robot:
 
         total_time_forwards = ticks_diff(end_time_forwards, start_time_forwards) / 1e03
 
-        print(self.tof_sensor.read_distance())
+        self.servo.set_angle(45)
+        sleep(0.5)
+
         if self.tof_sensor.read_distance() <= PARCEL_DETECTION_THRESHOLD:
             dest_node = self.get_depot_to_goto()
         else:
             dest_node = None
-
-        self.servo.set_angle(45)
-        sleep(0.5)
 
         self.left_motor.reverse(ROBOT_SPEED_LINE)
         self.right_motor.reverse(ROBOT_SPEED_LINE)
@@ -335,3 +335,4 @@ class Robot:
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]
         return f"Position: {self.curr_node} | Direction : {directions[self.dir]}"
+

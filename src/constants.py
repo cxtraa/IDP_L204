@@ -51,7 +51,7 @@ START_BUTTON_PIN = 12
 
 # Robot dimensions
 ROBOT_LENGTH = 115
-ROBOT_WIDTH = 170
+ROBOT_WIDTH = 175
 
 PARCEL_DETECTION_THRESHOLD = 10  # Distance in mm to confirm parcel presence
 
