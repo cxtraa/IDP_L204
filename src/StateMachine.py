@@ -17,6 +17,14 @@ class StateMachine:
         self.num_empty_parcel = 0
         self.should_end = False
 
+    def start_procedure(self) -> None:
+        while not self.robot.control.at_junction():
+            self.robot.left_motor.forward(ROBOT_SPEED_LINE)
+            self.robot.right_motor.forward(ROBOT_SPEED_LINE)        
+        
+        self.robot.left_motor.off()
+        self.robot.right_motor.off()
+
     def update(self) -> None:
         # - Check if we are safe to try to pick up a parcel
         # - i.e. check time taken for journey to the next pickup point then to the starting node (home) is less than
@@ -30,8 +38,9 @@ class StateMachine:
         #     to go to nearest pickup point and then home
 
         # Check if we're safe to go to pickup point and look for parcel
+        print(f"Current location/direction at start of update: {self.robot.curr_node, self.robot.dir}")
         pickup_location = PICKUP_POINTS[self.i]
-        print(pickup_location)
+        print(f"Next pickup location: {pickup_location}")
         go_home_flag = True
         if self.check_safe_to_go(pickup_location):
             go_home_flag = False

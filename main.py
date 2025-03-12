@@ -10,6 +10,8 @@ def main():
     state_machine = StateMachine()
     while not state_machine.robot.start_button.pressed():
         sleep(DELTA_T)
+    
+    state_machine.start_procedure() # move robot forward to junction
         
     while not state_machine.should_end:
         try:
