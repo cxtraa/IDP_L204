@@ -56,6 +56,8 @@ class Robot:
         shortest_path, _ = self.path_finder.find_shortest_path(self.curr_node, dest)
         for i in range(1, len(shortest_path)):
             self.move(shortest_path[i])
+            print(self.dir)
+            print(self.curr_node)
 
     def forward(self) -> None:
         """

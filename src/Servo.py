@@ -1,6 +1,5 @@
 from machine import Pin, PWM
 
-
 class Servo:
     MAX_DUTY = 7864
     MIN_DUTY = 1802
