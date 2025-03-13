@@ -33,7 +33,7 @@ class StateMachine:
     def end_procedure(self) -> None:
         self.robot.left_motor.forward(ROBOT_SPEED_LINE)
         self.robot.right_motor.forward(ROBOT_SPEED_LINE)
-        sleep(self.time_forwards)
+        sleep(self.time_forwards + 0.7)
         self.robot.left_motor.off()
         self.robot.right_motor.off()
 
@@ -53,6 +53,7 @@ class StateMachine:
         pickup_location = PICKUP_POINTS[self.i]
         print(f"Next pickup location: {pickup_location}")
         go_home_flag = True
+        print("About to call safe to go, should see time")
         if self.check_safe_to_go(pickup_location):
             go_home_flag = False
             node_adj_to_pickup = GRAPH[pickup_location][0]
@@ -85,15 +86,14 @@ class StateMachine:
             self.i = (self.i + 1) % 4
 
         if go_home_flag:
-            self.back_to_start()
+            self.robot.back_to_start()
+            self.should_end = True
 
     def check_safe_to_go(self, dest: tuple[int, int]) -> bool:
         time_to_dest, dest_dir = self.robot.time_for_path(self.robot.curr_node, dest, self.robot.dir)
         time_home, _ = self.robot.time_for_path(dest, START_POINT, dest_dir)
 
         time_now = ticks_diff(ticks_ms(), self.time_start) * 1e-03
-        return time_now + time_to_dest + time_home < TOTAL_ALLOWED_TIME
-
-    def back_to_start(self) -> None:
-        self.robot.navigate(START_POINT)
-
+        total_time = time_now + time_to_dest + time_home
+        print(f"The total time to get home from curr node: {self.robot.curr_node} is {total_time}.")
+        return total_time < TOTAL_ALLOWED_TIME

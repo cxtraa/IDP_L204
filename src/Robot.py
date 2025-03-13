@@ -225,6 +225,7 @@ class Robot:
             line_speed = APPROX_LINE_SPEED
         else:
             line_speed = self.total_line_distance / self.total_line_time
+            print(f"The measured line speed is {line_speed}")
         curr_dir = start_dir
         new_dir = curr_dir
         num_turns = 0
@@ -237,12 +238,11 @@ class Robot:
             elif abs(curr_dir - new_dir) == 2:
                 num_turns += 2
 
-        if line_speed:
-            total_turn_time = num_turns * self.turn_time
-            total_line_time = (distance * 1e-02) / line_speed
-            return TIME_SAFETY_FACTOR * (total_turn_time + total_line_time), new_dir
-        else:
-            return 0, new_dir
+        total_turn_time = num_turns * self.turn_time
+        total_line_time = (distance * 1e-02) / line_speed
+        time_to_return = TIME_SAFETY_FACTOR * (total_turn_time + total_line_time)
+        print(f"Time for path from node {node_a} to {node_b} is : {time_to_return}")
+        return time_to_return, new_dir
 
     def get_depot_to_goto(self) -> tuple[int, int] | None:
         """
@@ -252,7 +252,7 @@ class Robot:
         print("Finding colour of parcel.")
         parcel_colour_readings = []
         for i in range(3):
-            sleep(0.2)
+            sleep(0.05)
             parcel_colour_readings.append(self.colour_sensor.read_rgbc())
         print(parcel_colour_readings)
         parcel_rgbc = max(parcel_colour_readings[::-1], key=parcel_colour_readings.count) # Give precedence to most recent reading
@@ -284,7 +284,7 @@ class Robot:
         self.servo.set_angle(0)
         sleep(0.3)
         start_adjustment = ticks_ms()
-        while ticks_diff(ticks_ms(), start_adjustment) * 1e-03 > TIGHT_SPACE_REVERSE_TIME:
+        while ticks_diff(ticks_ms(), start_adjustment) * 1e-03 <= TIGHT_SPACE_REVERSE_TIME:
             self.left_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
             self.right_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
             sleep(DELTA_T)
@@ -295,7 +295,7 @@ class Robot:
 
         # Go forward until package detected or junction reached.
         moving_avg = sum(moving_avg_list)/len(moving_avg_list)
-        while moving_avg  > PARCEL_DETECTION_THRESHOLD and not self.control.at_junction():
+        while moving_avg > PARCEL_DETECTION_THRESHOLD and not self.control.at_junction():
             moving_avg_list[i] = self.tof_sensor.read_distance()
             self.left_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
             self.right_motor.forward(ROBOT_SPEED_LINE - self.control.get_pid_error())
@@ -320,7 +320,12 @@ class Robot:
         self.right_motor.off()
         sleep(0.5)
 
-        if self.tof_sensor.read_distance() <= PARCEL_DETECTION_THRESHOLD:
+        readings = []
+        for i in range(5):
+            readings.append(self.tof_sensor.read_distance())
+        avg_reading = sum(readings) / len(readings)
+
+        if avg_reading <= PARCEL_DETECTION_THRESHOLD:
             dest_node = self.get_depot_to_goto()
         else:
             dest_node = None
@@ -380,6 +385,28 @@ class Robot:
         """
         self.servo.set_angle(0)
         sleep(0.5)
+
+    def back_to_start(self):
+        """
+        Send the robot back to the beginning box.
+        """
+
+        self.navigate(GRAPH[START_POINT][0])
+        self.change_dir(2)
+        # Reverse for a short period of time
+        self.left_motor.reverse(ROBOT_SPEED_LINE)
+        self.right_motor.reverse(ROBOT_SPEED_LINE)
+        sleep(TIGHT_SPACE_REVERSE_TIME)
+        self.left_motor.off()
+        self.right_motor.off()
+
+        # Line follow forwards to START_POINT = (0, -29)
+        while not self.control.at_junction():
+            self.left_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
+            self.right_motor.forward(ROBOT_SPEED_LINE - self.control.get_pid_error())
+            sleep(DELTA_T)
+
+        self.flash_led.off()
 
     def __str__(self) -> str:
         directions = ["North", "East", "South", "West"]

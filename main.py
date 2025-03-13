@@ -20,7 +20,8 @@ def main():
                 break
         except Exception as e:
             sys.print_exception(e)
-            state_machine.back_to_start()
+            print("There was an exception, going back to start.")
+            state_machine.robot.back_to_start()
             break
 
     state_machine.end_procedure()

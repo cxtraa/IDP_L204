@@ -12,7 +12,7 @@ GRAPH = {
     (103, 162) : [(103, 88), (40, 162)],
     (40, 162) : [(103, 162), (-1, 162), (40, 139)],
     (40, 139) : [(40, 162)],
-    (-1, 162) : [(40, 162), (-1, 123), (-104, 162)],
+    (-1, 162) : [(40, 162), (-104, 162), (-1, 123)],
     (-104, 162) : [(-104, 88), (-1, 162)],
     (-27, 123) : [(-1, 123)],
     (-1, 123) : [(-27, 123), (-1, 162), (-1, 88)],
@@ -53,20 +53,20 @@ START_BUTTON_PIN = 12
 ROBOT_EFFECTIVE_LENGTH = 115
 ROBOT_EFFECTIVE_WIDTH = 175
 
-SERVO_LIFTED_ANGLE = 45
+SERVO_LIFTED_ANGLE = 90
 
 PARCEL_DETECTION_THRESHOLD = 10  # Distance in mm to confirm parcel presence
 
 # Line following
-K_P = 20.0
-K_D = 0.5
-K_I = 0.001
+K_P = 25.0
+K_D = 0.01
+K_I = 0.02
 
 # Time delays
 TIME_FORWARD_AT_TURN = 1.35
 TIME_FORWARD_AT_DEPOT = 0.4
 EXTRA_REVERSE_TIME_AT_DEPOT = 0.1
-TIGHT_SPACE_REVERSE_TIME = 0.2
+TIGHT_SPACE_REVERSE_TIME = 0.4
 DELTA_T = 0.001
 TIME_SAFETY_FACTOR = 1.2
 TOTAL_ALLOWED_TIME = 5 * 60
