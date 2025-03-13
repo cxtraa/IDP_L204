@@ -25,35 +25,29 @@ class Robot:
         self.left_motor = Motor(LEFT_MOTOR_NUM)
         self.right_motor = Motor(RIGHT_MOTOR_NUM)
         self.servo = Servo(SERVO_NUM)
-        self.servo.set_angle(45)
+        self.servo.set_angle(SERVO_LIFTED_ANGLE)
 
-        self.flash_led = FlashLed(FLASH_LED_PIN)
-        try:
-            self.colour_sensor = ColourSensor(COLOUR_SENSOR_SDA_PIN, COLOUR_SENSOR_SCL_PIN)
-        except OSError:
-            self.colour_sensor = None
-        try:
-            self.tof_sensor = TofSensor(TOF_SENSOR_SDA_PIN, TOF_SENSOR_SCL_PIN)
-        except OSError:
-            self.tof_sensor = None
         self.start_button = Button(START_BUTTON_PIN)
-        self.dir = start_dir
-        self.curr_node = start_node
+        self.flash_led = FlashLed(FLASH_LED_PIN)
+        self.colour_sensor = ColourSensor(COLOUR_SENSOR_SDA_PIN, COLOUR_SENSOR_SCL_PIN)
+        self.tof_sensor = TofSensor(TOF_SENSOR_SDA_PIN, TOF_SENSOR_SCL_PIN)
 
         self.graph = graph
         self.path_finder = PathFinder(graph=graph)
+        self.control = Control(sensor_pos=sensor_pos)
 
+        self.dir = start_dir
+        self.curr_node = start_node
         self.total_line_distance = 0
         self.total_line_time = 0
-
         self.turn_time = 0
-        self.control = Control(sensor_pos=sensor_pos)
 
     def navigate(self, dest: tuple[int, int]) -> None:
         """
         Move the robot to `dest` where multiple nodes might be in between.
         """
         shortest_path, _ = self.path_finder.find_shortest_path(self.curr_node, dest)
+        print("Navigating.")
         print(f"Shortest path: {shortest_path}")
         for i in range(1, len(shortest_path)):
             self.move(shortest_path[i])
@@ -63,12 +57,15 @@ class Robot:
         """
         Move the robot forward until it reaches the next node.
         """
-        # While we are not at a junction, run both the left and right motor, using PID control to line follow
+        print("Going forwards.")
+        # Go forwards until we don't detect the previous junction
 
         self.left_motor.forward(ROBOT_SPEED_LINE)
         self.right_motor.forward(ROBOT_SPEED_LINE)
         while self.control.at_junction():
             sleep(DELTA_T)
+
+        # Now, while we are not at a junction, run both the left and right motor, using PID control to line follow
 
         while not self.control.at_junction():
             self.left_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
@@ -83,6 +80,8 @@ class Robot:
         """Turn the robot 90 degrees in the direction indicated by dir.
         0 - left
         1 - right"""
+
+        print(f"Turning 90 degrees. Direction: {["Left", "Right"][direction]}.")
 
         if not self.turn_time:
             turn_start_time = ticks_ms()
@@ -125,6 +124,7 @@ class Robot:
         """
         Turn 180 degrees.
         """
+        print(f"Turning 180 degrees. Direction: {['Left', 'Right'][direction]}.")
         if direction == LEFT:
             outside_motor = self.right_motor
             inside_motor = self.left_motor
@@ -142,11 +142,14 @@ class Robot:
         while not (self.control.get_ir_readings()[1] and self.control.get_ir_readings()[2]):
             sleep(DELTA_T)
 
+        inside_motor.off()
+        outside_motor.off()
+
     def change_dir(self, desired_dir: int, mode: int = SMOOTH) -> None:
         """
         Decide whether to call turn_left(), turn_right() or turn_180()
         """
-
+        print(f"Changing direction. Desired dir: {desired_dir}.")
         if desired_dir == (self.dir + 1) % 4:
             self.turn_90(RIGHT, FORWARDS, mode)  # Turn right
         elif desired_dir == (self.dir - 1) % 4:
@@ -163,6 +166,9 @@ class Robot:
         """
         x_1, y_1 = node_a
         x_2, y_2 = node_b
+
+        if not (x_1 == x_2 or y_1 == y_2):
+            raise ValueError("node_A and node_B must be adjacent nodes.")
 
         if x_2 > x_1:
             return 1
@@ -190,8 +196,8 @@ class Robot:
             mode = SMOOTH
         self.change_dir(desired_dir, mode)
         # Start flashing led when leaving the start point
-        if self.curr_node == (0, 0):
-            self.flash_led.flash()
+        if dest == START_POINT:
+            self.flash_led.off()
 
         line_start_time = ticks_ms()
         self.forward()
@@ -206,8 +212,8 @@ class Robot:
         self.curr_node = dest
 
         # Turn LED OFF if returning to the start
-        if self.curr_node == START_POINT:
-            self.flash_led.off()
+        if self.curr_node == (0, 0):
+            self.flash_led.flash()
 
     def time_for_path(self, node_a: tuple[int, int], node_b: tuple[int, int], start_dir: int) -> tuple[float, int]:
         """
@@ -232,22 +238,27 @@ class Robot:
                 num_turns += 2
 
         if line_speed:
-            return (TIME_SAFETY_FACTOR * ((num_turns * self.turn_time) + (distance * 1e-02) / line_speed), new_dir)
+            total_turn_time = num_turns * self.turn_time
+            total_line_time = (distance * 1e-02) / line_speed
+            return TIME_SAFETY_FACTOR * (total_turn_time + total_line_time), new_dir
         else:
-            return (0, new_dir)
+            return 0, new_dir
 
     def get_depot_to_goto(self) -> tuple[int, int] | None:
         """
         can return:
         DEPOT_RED_YELLOW, DEPOT_BLUE_GREEN, None
         """
+        print("Finding colour of parcel.")
         parcel_colour_readings = []
-        for i in range(5):
+        for i in range(3):
             sleep(0.2)
             parcel_colour_readings.append(self.colour_sensor.read_rgbc())
         print(parcel_colour_readings)
-        parcel_rgbc = max(set(parcel_colour_readings), key=parcel_colour_readings.count)
+        parcel_rgbc = max(parcel_colour_readings[::-1], key=parcel_colour_readings.count) # Give precedence to most recent reading
         parcel_colour = COLOUR_READINGS[min(COLOUR_READINGS, key=lambda x: ColourSensor.colour_error(parcel_rgbc, x))]
+
+        print(f"Colour: {["Red", "Yellow", "Blue", "Green"][parcel_colour]}.")
 
         if parcel_colour in [RED, YELLOW]:
             return DEPOT_RED_YELLOW
@@ -265,20 +276,21 @@ class Robot:
         """
         moving_avg_list = [float('inf')]*5
         i = 0
-        if tight_space:
-            self.left_motor.reverse(ROBOT_SPEED_LINE)
-            self.right_motor.reverse(ROBOT_SPEED_LINE)
-            sleep(TIGHT_SPACE_REVERSE_TIME)
-            self.left_motor.off()
-            self.right_motor.off()
+        self.left_motor.reverse(ROBOT_SPEED_LINE)
+        self.right_motor.reverse(ROBOT_SPEED_LINE)
+        sleep(TIGHT_SPACE_REVERSE_TIME)
+        self.left_motor.off()
+        self.right_motor.off()
         self.servo.set_angle(0)
         sleep(0.3)
-        if tight_space:
-            self.left_motor.forward(ROBOT_SPEED_LINE)
-            self.right_motor.forward(ROBOT_SPEED_LINE)
-            sleep(TIGHT_SPACE_REVERSE_TIME)
-            self.left_motor.off()
-            self.right_motor.off()
+        start_adjustment = ticks_ms()
+        while ticks_diff(ticks_ms(), start_adjustment) * 1e-03 > TIGHT_SPACE_REVERSE_TIME:
+            self.left_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
+            self.right_motor.forward(ROBOT_SPEED_LINE + self.control.get_pid_error())
+            sleep(DELTA_T)
+        self.left_motor.off()
+        self.right_motor.off()
+
         start_time_forwards = ticks_ms()
 
         # Go forward until package detected or junction reached.
@@ -296,21 +308,22 @@ class Robot:
 
         end_time_forwards = ticks_ms()
 
-        total_time_forwards = 0.1 + ticks_diff(end_time_forwards, start_time_forwards) / 1e03
+        total_time_forwards = ticks_diff(end_time_forwards, start_time_forwards) / 1e03
 
-        self.servo.set_angle(45)
+        self.servo.set_angle(SERVO_LIFTED_ANGLE)
         sleep(0.2)
-
-        if self.tof_sensor.read_distance() <= PARCEL_DETECTION_THRESHOLD:
-            dest_node = self.get_depot_to_goto()
-        else:
-            dest_node = None
 
         self.left_motor.reverse(ROBOT_SPEED_LINE)
         self.right_motor.reverse(ROBOT_SPEED_LINE)
         sleep(total_time_forwards)
         self.left_motor.off()
         self.right_motor.off()
+        sleep(0.5)
+
+        if self.tof_sensor.read_distance() <= PARCEL_DETECTION_THRESHOLD:
+            dest_node = self.get_depot_to_goto()
+        else:
+            dest_node = None
 
         return dest_node
 
@@ -338,6 +351,8 @@ class Robot:
         self.left_motor.forward(ROBOT_SPEED_LINE)
         self.right_motor.forward(ROBOT_SPEED_LINE)
         sleep(TIME_FORWARD_AT_DEPOT)
+        self.left_motor.off()
+        self.right_motor.off()
 
         self.deposit_parcel()
 
@@ -349,7 +364,7 @@ class Robot:
         self.left_motor.off()
         self.right_motor.off()
 
-        self.servo.set_angle(45)
+        self.servo.set_angle(SERVO_LIFTED_ANGLE)
 
         if depot == DEPOT_RED_YELLOW:
             self.turn_180(LEFT)

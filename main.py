@@ -23,6 +23,8 @@ def main():
             state_machine.back_to_start()
             break
 
+    state_machine.end_procedure()
+
     print("Program finished successfully.")
 
 if __name__ == "__main__":
